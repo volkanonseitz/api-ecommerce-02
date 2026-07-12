@@ -23,7 +23,7 @@ export class AuthController {
     private authService: AuthService,
     private securityService: UserSecurityService,
     private permissionService: PermissionService,
-     private readonly prisma: PrismaService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Post('login')

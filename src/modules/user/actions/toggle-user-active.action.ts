@@ -9,7 +9,7 @@ export class ToggleUserActiveAction {
     return this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
-        data: { isActive: active },
+        data: { is_active: active },
       });
       if (!active) {
         // Nonaktifkan shop dan produk
@@ -21,7 +21,7 @@ export class ToggleUserActiveAction {
         if (shopIds.length > 0) {
           await tx.shops.updateMany({
             where: { id: { in: shopIds } },
-            data: { isActive: false },
+            data: { is_active: false },
           });
           await tx.products.updateMany({
             where: { shop_id: { in: shopIds } },
@@ -29,7 +29,7 @@ export class ToggleUserActiveAction {
           });
         }
       }
-      return tx.user.findUnique({ where: { id: userId } });
+      return tx.users.findUnique({ where: { id: userId } });
     });
   }
 }

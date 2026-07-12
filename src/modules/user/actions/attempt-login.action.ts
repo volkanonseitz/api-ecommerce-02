@@ -16,18 +16,18 @@ export class AttemptLoginAction {
     ip: string,
     userAgent: string,
   ) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.users.findUnique({ where: { email } });
     if (!user) {
       // Timing attack mitigation
       await bcrypt.compare('dummy', '$2y$10$' + '0'.repeat(53));
       return { status: 'invalid' };
     }
 
-    if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
-      return { status: 'locked', lockedUntil: user.lockedUntil };
+    if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      return { status: 'locked', locked_until: user.locked_until };
     }
 
-    if (!user.isActive || !(await bcrypt.compare(password, user.password))) {
+    if (!user.is_active || !(await bcrypt.compare(password, user.password))) {
       await this.securityService.handleFailedLoginAttempt(
         user.id,
         ip,
@@ -36,7 +36,7 @@ export class AttemptLoginAction {
       return { status: 'invalid' };
     }
 
-    if (!user.emailVerifiedAt) {
+    if (!user.email_verified_at) {
       return { status: 'unverified', user };
     }
 

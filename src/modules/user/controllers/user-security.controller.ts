@@ -13,11 +13,15 @@ import { Permissions } from '../decorators/permissions.decorator';
 import { PermissionGuard } from '../guards/permission.guard';
 import { UserSecurityService } from '../services/user-security.service';
 import type { Request as ExpressRequest } from 'express';
+import { PrismaService } from '../../../../prisma/prisma.service';
 
 @Controller('security')
 @UseGuards(JwtAuthGuard)
 export class UserSecurityController {
-  constructor(private securityService: UserSecurityService) {}
+  constructor(
+    private securityService: UserSecurityService,
+    private prisma: PrismaService,
+  ) {}
 
   @Post('change-password')
   async changePassword(@Body() body: any, @Request() req: ExpressRequest) {

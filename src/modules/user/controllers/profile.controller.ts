@@ -14,6 +14,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { ChangePasswordAction } from '../actions/change-password.action';
 import type { Request as ExpressRequest } from 'express';
+import { PrismaService } from '../../../../prisma/prisma.service';
 
 @Controller('profile')
 @UseGuards(JwtAuthGuard)
@@ -21,6 +22,7 @@ export class ProfileController {
   constructor(
     private userCommandService: UserCommandService,
     private changePasswordAction: ChangePasswordAction,
+    private prisma: PrismaService,
   ) {}
 
   @Get('me')

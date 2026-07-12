@@ -19,6 +19,7 @@ import { AdminCreateUserDto } from '../dto/admin-create-user.dto';
 import { AdminUpdateUserDto } from '../dto/admin-update-user.dto';
 import { ToggleUserActiveAction } from '../actions/toggle-user-active.action';
 import { ToggleAdminPrivilegeAction } from '../actions/toggle-admin-privilege.action';
+import { PrismaService } from '../../../../prisma/prisma.service';
 
 @Controller('admin/users')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -29,6 +30,7 @@ export class UserManagementController {
     private userQueryService: UserQueryService,
     private toggleUserActiveAction: ToggleUserActiveAction,
     private toggleAdminPrivilegeAction: ToggleAdminPrivilegeAction,
+    private prisma: PrismaService,
   ) {}
 
   @Get()
@@ -58,7 +60,7 @@ export class UserManagementController {
       include: {
         profile: true,
         address: true,
-        shops: true,
+        shops_owned: true,
         managed_shop: true,
       },
     });

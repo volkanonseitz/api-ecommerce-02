@@ -11,11 +11,11 @@ export class ChangePasswordAction {
     oldPassword: string,
     newPassword: string,
   ): Promise<boolean> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.users.findUnique({ where: { id: userId } });
     if (!user) return false;
     if (!(await bcrypt.compare(oldPassword, user.password))) return false;
 
-    await this.prisma.user.update({
+    await this.prisma.users.update({
       where: { id: userId },
       data: { password: await bcrypt.hash(newPassword, 10) },
     });
