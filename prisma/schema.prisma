@@ -6,6 +6,129 @@ datasource db {
   provider = "mysql"
 }
 
+// ============================================================
+// ENUMS (berdasarkan file App\Enums)
+// ============================================================
+
+enum CouponType {
+  fixed
+  percentage
+  free_shipping
+}
+
+enum DefaultStatusType {
+  processing
+  approved
+  pending
+  rejected
+}
+
+enum FlashSaleType {
+  percentage
+  fixed_rate
+}
+
+enum OrderStatus {
+  order_pending // nilai: "order-pending"
+  order_processing // "order-processing"
+  order_completed // "order-completed"
+  order_cancelled // "order-cancelled"
+  order_refunded // "order-refunded"
+  order_failed // "order-failed"
+  order_at_local_facility // "order-at-local-facility"
+  order_out_for_delivery // "order-out-for-delivery"
+}
+
+enum PaymentStatus {
+  payment_pending // "payment-pending"
+  payment_processing // "payment-processing"
+  payment_success // "payment-success"
+  payment_failed // "payment-failed"
+  payment_reversal // "payment-reversal"
+  payment_refunded // "payment-refunded"
+  payment_cash_on_delivery // "payment-cash-on-delivery"
+  payment_cash // "payment-cash"
+  payment_wallet // "payment-wallet"
+  payment_awaiting_approval // "payment-awaiting-for-approval"
+}
+
+enum ProductStatus {
+  under_review
+  approved
+  rejected
+  publish
+  unpublish
+  draft
+}
+
+enum ProductType {
+  simple
+  variable
+}
+
+enum ProductVisibilityStatus {
+  visibility_private
+  visibility_public
+  visibility_protected
+}
+
+enum RefundPolicyStatus {
+  approved
+  pending
+}
+
+enum RefundPolicyTarget {
+  vendor
+  customer
+}
+
+enum RefundStatus {
+  approved
+  pending
+  rejected
+  processing
+}
+
+enum ResourceType {
+  DROPOFF_LOCATION
+  PICKUP_LOCATION
+  PERSON
+  DEPOSIT
+  FEATURES
+}
+
+enum ShippingType {
+  fixed
+  percentage
+  free_shipping
+}
+
+enum StoreNoticePriority {
+  high
+  medium
+  low
+}
+
+enum StoreNoticeType {
+  all_vendor
+  specific_vendor
+  all_shop
+  specific_shop
+}
+
+enum WithdrawStatus {
+  approved
+  pending
+  on_hold
+  rejected
+  processing
+}
+
+enum ParticipantType {
+  shop
+  user
+}
+
 // ============================================================================
 // AUTH / USERS
 // ============================================================================
