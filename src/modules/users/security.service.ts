@@ -22,10 +22,7 @@ export class UsersSecurityService {
     });
   }
 
-  async isPasswordInHistory(
-    userId: number,
-    newPassword: string,
-  ): Promise<boolean> {
+  async isPasswordInHistory(userId: number, newPassword: string): Promise<boolean> {
     const history = await this.prisma.passwordHistory.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -40,10 +37,7 @@ export class UsersSecurityService {
     return false;
   }
 
-  async recordPasswordChange(
-    userId: number,
-    newPassword: string,
-  ): Promise<void> {
+  async recordPasswordChange(userId: number, newPassword: string): Promise<void> {
     const hash = await bcrypt.hash(newPassword, 12);
 
     await this.prisma.passwordHistory.create({
@@ -84,11 +78,7 @@ export class UsersSecurityService {
     });
   }
 
-  async revokeSession(
-    userId: number,
-    sessionDbId: number,
-    currentSessionId: string,
-  ) {
+  async revokeSession(userId: number, sessionDbId: number, currentSessionId: string) {
     const session = await this.prisma.userSession.findFirst({
       where: { id: sessionDbId, userId },
     });

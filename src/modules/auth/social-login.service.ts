@@ -10,6 +10,38 @@ export interface SocialProfile {
   avatar?: string;
 }
 
+/**
+ * Bentuk mentah response Facebook Graph `/me?fields=id,name,email,picture`.
+ * Field opsional (bukan `id`/`email`) sengaja dibuat optional karena
+ * Graph API tidak selalu mengembalikan semuanya (mis. user tidak
+ * mengizinkan scope tertentu).
+ */
+interface FacebookProfileResponse {
+  id: string;
+  name?: string;
+  email?: string;
+  picture?: { data?: { url?: string } };
+}
+
+/** Bentuk mentah response Google `oauth2/v3/userinfo`. */
+interface GoogleProfileResponse {
+  sub: string;
+  name?: string;
+  email?: string;
+  picture?: string;
+}
+
+/**
+ * Padanan Laravel\Socialite (dipakai di SocialLoginService.php lama).
+ * Socialite tidak punya padanan langsung di Node, jadi verifikasi access
+ * token dilakukan manual dengan memanggil endpoint resmi tiap provider —
+ * fungsinya sama: tukar access_token dari client -> profil user asli.
+ *
+ * `HttpService.get<T>()` diberi generic eksplisit supaya `data` bertipe T
+ * (bukan `any`) — inilah yang membuat ESLint `@typescript-eslint/no-unsafe-*`
+ * tenang: tanpa generic ini, AxiosResponse<any> membuat setiap akses
+ * `.email`, `.id`, dst dianggap "unsafe member access" oleh linter.
+ */
 @Injectable()
 export class SocialLoginService {
   private static readonly ALLOWED_PROVIDERS = ['facebook', 'google'] as const;
@@ -37,18 +69,21 @@ export class SocialLoginService {
   private async fetchFacebookProfile(
     accessToken: string,
   ): Promise<SocialProfile> {
-    const baseUrl = this.config.get<string>('FACEBOOK_GRAPH_URL');
-    const { data } = await firstValueFrom(
-      this.httpService.get(`${baseUrl}/me`, {
+    const baseUrl = this.config.getOrThrow<string>('FACEBOOK_GRAPH_URL');
+
+    const response = await firstValueFrom(
+      this.httpService.get<FacebookProfileResponse>(`${baseUrl}/me`, {
         params: { fields: 'id,name,email,picture', access_token: accessToken },
       }),
-    ).catch(() => {
+    ).catch((): never => {
       throw new BadRequestException(
         'Gagal memverifikasi access token Facebook.',
       );
     });
 
-    if (!data?.email) {
+    const data = response.data;
+
+    if (!data.email) {
       throw new BadRequestException('Email not provided by social provider');
     }
 
@@ -63,16 +98,19 @@ export class SocialLoginService {
   private async fetchGoogleProfile(
     accessToken: string,
   ): Promise<SocialProfile> {
-    const url = this.config.get<string>('GOOGLE_USERINFO_URL');
-    const { data } = await firstValueFrom(
-      this.httpService.get(url as string, {
+    const url = this.config.getOrThrow<string>('GOOGLE_USERINFO_URL');
+
+    const response = await firstValueFrom(
+      this.httpService.get<GoogleProfileResponse>(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
       }),
-    ).catch(() => {
+    ).catch((): never => {
       throw new BadRequestException('Gagal memverifikasi access token Google.');
     });
 
-    if (!data?.email) {
+    const data = response.data;
+
+    if (!data.email) {
       throw new BadRequestException('Email not provided by social provider');
     }
 

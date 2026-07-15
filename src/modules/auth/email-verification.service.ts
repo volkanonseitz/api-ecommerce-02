@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash } from 'crypto';
+import type { StringValue } from 'ms';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { MailerService } from '../../mail/mailer.service';
 import { renderVerifyEmailTemplate } from '../../mail/templates/verify-email.template';
@@ -11,6 +12,17 @@ interface VerifyEmailTokenPayload {
   hash: string; // sha1(email), padanan `sha1($notifiable->getEmailForVerification())` Laravel
 }
 
+/**
+ * Padanan Illuminate\Auth\Notifications\VerifyEmail + VerifyEmailNotification.php
+ * lama. Laravel default membuat "signed URL" sementara (temporarySignedRoute)
+ * yang ditandatangani pakai APP_KEY dan berisi {id, hash, expires, signature}
+ * sebagai beberapa query param terpisah.
+ *
+ * Di sini disederhanakan jadi SATU token JWT (berisi {sub, hash} + expiry
+ * bawaan JWT) — properti keamanannya setara (signed, time-limited, tidak
+ * bisa dipalsukan tanpa secret), tapi lebih sederhana untuk API-only
+ * service seperti ini (tidak perlu route bernama + rekonstruksi signature).
+ */
 @Injectable()
 export class EmailVerificationService {
   constructor(
@@ -30,13 +42,10 @@ export class EmailVerificationService {
 
   private async generateToken(userId: number, email: string): Promise<string> {
     return this.jwt.signAsync(
+      { sub: userId, hash: this.hashEmail(email) } satisfies VerifyEmailTokenPayload,
       {
-        sub: userId,
-        hash: this.hashEmail(email),
-      } satisfies VerifyEmailTokenPayload,
-      {
-        secret: this.config.get<string>('EMAIL_VERIFICATION_SECRET'),
-        expiresIn: `${this.expiresInMinutes}m`,
+        secret: this.config.getOrThrow<string>('EMAIL_VERIFICATION_SECRET'),
+        expiresIn: `${this.expiresInMinutes}m` as StringValue,
       },
     );
   }
@@ -57,11 +66,7 @@ export class EmailVerificationService {
   }
 
   /** Padanan `$user->sendEmailVerificationNotification()` (dipicu event Registered / resend). */
-  async sendVerificationEmail(user: {
-    id: number;
-    email: string;
-    name: string;
-  }): Promise<void> {
+  async sendVerificationEmail(user: { id: number; email: string; name: string }): Promise<void> {
     const token = await this.generateToken(user.id, user.email);
     const url = this.buildVerificationUrl(token);
 
@@ -82,17 +87,13 @@ export class EmailVerificationService {
     let payload: VerifyEmailTokenPayload;
     try {
       payload = await this.jwt.verifyAsync<VerifyEmailTokenPayload>(token, {
-        secret: this.config.get<string>('EMAIL_VERIFICATION_SECRET'),
+        secret: this.config.getOrThrow<string>('EMAIL_VERIFICATION_SECRET'),
       });
     } catch {
-      throw new BadRequestException(
-        'Link verifikasi tidak valid atau sudah kedaluwarsa.',
-      );
+      throw new BadRequestException('Link verifikasi tidak valid atau sudah kedaluwarsa.');
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-    });
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
     if (!user) {
       throw new BadRequestException('Link verifikasi tidak valid.');
     }
@@ -100,19 +101,14 @@ export class EmailVerificationService {
     // Kalau email sudah diganti setelah link dikirim, hash tidak akan cocok
     // lagi -> link lama otomatis tidak berlaku (padanan perilaku Laravel).
     if (this.hashEmail(user.email) !== payload.hash) {
-      throw new BadRequestException(
-        'Link verifikasi tidak valid untuk email saat ini.',
-      );
+      throw new BadRequestException('Link verifikasi tidak valid untuk email saat ini.');
     }
 
     if (user.emailVerifiedAt) {
       return { alreadyVerified: true };
     }
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { emailVerifiedAt: new Date() },
-    });
+    await this.prisma.user.update({ where: { id: user.id }, data: { emailVerifiedAt: new Date() } });
     return { alreadyVerified: false };
   }
 }

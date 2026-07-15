@@ -12,7 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { AuthService, RequestMeta } from './auth.service';
+import { AuthService, type RequestMeta } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SocialLoginDto } from './dto/social-login.dto';
@@ -27,12 +27,22 @@ import { RbacService } from '../../common/services/rbac.service';
 import { EmailVerificationService } from './email-verification.service';
 import { UsersQueryService } from '../users/users-query.service';
 import type { AuthUser } from '../../types/auth-user.type';
-import { RefreshTokenSubject } from './strategies/jwt-refresh.strategy';
+import type { RefreshTokenSubject } from './strategies/jwt-refresh.strategy';
 
 function meta(req: Request, ip: string): RequestMeta {
   return { ip, userAgent: req.headers['user-agent'] ?? 'Unknown' };
 }
 
+/**
+ * Padanan App\Modules\User\Http\Controllers\AuthController.php.
+ * Thin controller: validasi (lewat DTO + ValidationPipe global) -> Service
+ * -> ApiResponse, tidak ada query Prisma langsung di sini.
+ *
+ * PERBEDAAN SENGAJA dari versi lama: field `token` tunggal (Sanctum)
+ * berubah jadi `accessToken` + `refreshToken` (JWT dua token), sesuai
+ * requirement migrasi. `sessionId` menggantikan `session_id` (dulu ID
+ * personal_access_token, sekarang UUID baris user_sessions).
+ */
 @Controller('auth')
 export class AuthController {
   constructor(

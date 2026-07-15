@@ -12,9 +12,7 @@ export interface VerifyEmailTemplateData {
  * yang setara (subject, tombol verifikasi, catatan kedaluwarsa) —
  * ganti isinya kalau desain email resmi sudah tersedia.
  */
-export function renderVerifyEmailTemplate(
-  data: VerifyEmailTemplateData,
-): string {
+export function renderVerifyEmailTemplate(data: VerifyEmailTemplateData): string {
   return `
   <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #1f2937;">
     <h2 style="margin-bottom: 4px;">${data.appName}</h2>

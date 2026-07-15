@@ -6,8 +6,17 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 
+/**
+ * Menyeragamkan SEMUA error (ValidationPipe, guard 403/401, exception kustom,
+ * error tak terduga) menjadi bentuk yang sama dengan BaseController::sendError()
+ * di Laravel: { success: false, code, message, errors }.
+ *
+ * Dengan filter ini, controller TIDAK perlu try/catch manual untuk error
+ * "generik" (validasi, forbidden, not found) — cukup lempar exception bawaan
+ * Nest atau salah satu class di common/exceptions/app.exceptions.ts.
+ */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
@@ -40,9 +49,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         }
       }
 
-      res
-        .status(status)
-        .json({ success: false, code: status, message, errors });
+      res.status(status).json({ success: false, code: status, message, errors });
       return;
     }
 

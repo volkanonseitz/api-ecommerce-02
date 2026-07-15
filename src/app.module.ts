@@ -19,7 +19,11 @@ import { JwtAccessGuard } from './common/guards/jwt-access.guard';
     UsersModule,
   ],
   providers: [
+    // Global guard: semua route wajib access token KECUALI yang ditandai
+    // @Public() (login/register/social-login/refresh) — padanan middleware
+    // `auth:sanctum` yang dipasang ke hampir semua route di Laravel lama.
     { provide: APP_GUARD, useClass: JwtAccessGuard },
+    // Global filter: menyeragamkan semua error jadi {success:false,code,message,errors}.
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],
 })

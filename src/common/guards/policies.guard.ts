@@ -1,23 +1,18 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
-
-import {
-  CHECK_POLICIES_KEY,
-  PolicyHandler,
-} from '../decorators/check-policies.decorator';
+import type { Request } from 'express';
+import { CHECK_POLICIES_KEY, PolicyHandler } from '../decorators/check-policies.decorator';
 import { CaslAbilityFactory } from '../casl/casl-ability.factory';
-import { AuthUser } from '../../types/auth-user.type';
+import type { AuthUser } from '../../types/auth-user.type';
 
-type AuthenticatedRequest = Request & {
-  user?: AuthUser;
-};
+type AuthenticatedRequest = Request & { user?: AuthUser };
 
+/**
+ * Mengevaluasi rule yang TIDAK butuh target entity (viewAny, create),
+ * dipasang per-route lewat @CheckPolicies(...). Untuk rule yang butuh
+ * target (by :id), tetap dicek manual di controller/service — lihat
+ * catatan di check-policies.decorator.ts.
+ */
 @Injectable()
 export class PoliciesGuard implements CanActivate {
   constructor(
@@ -27,17 +22,13 @@ export class PoliciesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const policyHandlers =
-      this.reflector.get<PolicyHandler[]>(
-        CHECK_POLICIES_KEY,
-        context.getHandler(),
-      ) ?? [];
+      this.reflector.get<PolicyHandler[]>(CHECK_POLICIES_KEY, context.getHandler()) ?? [];
 
     if (policyHandlers.length === 0) {
       return true;
     }
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-
     const user = request.user;
 
     if (!user) {
@@ -45,7 +36,6 @@ export class PoliciesGuard implements CanActivate {
     }
 
     const ability = this.caslAbilityFactory.defineAbilityFor(user);
-
     const allowed = policyHandlers.every((handler) => handler(ability));
 
     if (!allowed) {

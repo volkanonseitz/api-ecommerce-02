@@ -1,4 +1,4 @@
-import { AuthUser } from '../../types/auth-user.type';
+import type { AuthUser } from '../../types/auth-user.type';
 import { Action } from '../../common/casl/action.enum';
 import { CaslAbilityFactory } from '../../common/casl/casl-ability.factory';
 
@@ -25,24 +25,7 @@ export function toUserResource(
   requester: AuthUser,
   caslAbilityFactory: CaslAbilityFactory,
 ) {
-  const ability = caslAbilityFactory.defineAbilityFor(requester);
-  const canViewShopAssignment = ability
-    .rulesFor(Action.ViewShopAssignment, 'User')
-    .some((rule) => {
-      if (!rule.conditions) {
-        return true;
-      }
-
-      const idCondition = (
-        rule.conditions as { id?: number | { $ne?: number } }
-      ).id;
-
-      if (typeof idCondition === 'number') {
-        return idCondition === user.id;
-      }
-
-      return false;
-    });
+  const canViewShopAssignment = caslAbilityFactory.can(requester, Action.ViewShopAssignment, { id: user.id });
 
   return {
     id: user.id,

@@ -6,10 +6,6 @@ export class ChangePasswordDto {
   @IsString()
   old_password!: string;
 
-  @IsStrongPassword({
-    minLength: 12,
-    requireSpecialChar: true,
-    forbidRepeatingChars: true,
-  })
+  @IsStrongPassword({ minLength: 12, requireSpecialChar: true, forbidRepeatingChars: true })
   new_password!: string;
 }
