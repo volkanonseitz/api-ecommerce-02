@@ -1,6 +1,5 @@
 import { IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
 
-/** Sub-objek `profile` pada RegisterRequest.php */
 export class RegisterProfileDto {
   @IsOptional()
   @IsString()
@@ -17,12 +16,6 @@ export class RegisterProfileDto {
   socials?: unknown[];
 }
 
-/**
- * Sub-objek `address` pada RegisterRequest.php.
- * required_with:address di Laravel -> di sini cukup @IsString wajib,
- * karena kalau object `address` tidak dikirim sama sekali, field ini juga
- * tidak divalidasi (lihat @IsOptional di RegisterDto.address).
- */
 export class RegisterAddressDto {
   @IsString()
   @MaxLength(255)

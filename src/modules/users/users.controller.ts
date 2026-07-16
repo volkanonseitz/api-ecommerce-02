@@ -18,7 +18,10 @@ import { UsersCommandService } from './users-command.service';
 import { UsersQueryService } from './users-query.service';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
-import { TargetUserByIdDto, TargetUserByUserIdDto } from './dto/target-user.dto';
+import {
+  TargetUserByIdDto,
+  TargetUserByUserIdDto,
+} from './dto/target-user.dto';
 import { ApiResponse } from '../../common/utils/response.util';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CheckPolicies } from '../../common/decorators/check-policies.decorator';
@@ -28,14 +31,6 @@ import { Action } from '../../common/casl/action.enum';
 import type { AuthUser } from '../../types/auth-user.type';
 import { toUserResource } from './user.mapper';
 
-/**
- * Padanan App\Modules\User\Http\Controllers\UserManagementController.php.
- * Semua endpoint di sini dilindungi JwtAccessGuard (global) + PoliciesGuard.
- * Untuk rule yang butuh target entity (view/update/delete/ban/dst),
- * otorisasi dicek manual lewat `caslAbilityFactory.authorize()` SETELAH
- * entity di-fetch — persis seperti `$this->authorize('update', $user)`
- * di controller Laravel lama (defense in depth, bukan cuma guard).
- */
 @UseGuards(PoliciesGuard)
 @Controller('users')
 export class UsersController {
@@ -54,7 +49,9 @@ export class UsersController {
     @Query('limit', new DefaultValuePipe(15), ParseIntPipe) limit: number,
   ) {
     const { items, totalItems } = await this.queryService.paginate(page, limit);
-    const data = items.map((u) => toUserResource(u, actor, this.caslAbilityFactory));
+    const data = items.map((u) =>
+      toUserResource(u, actor, this.caslAbilityFactory),
+    );
     return ApiResponse.paginated(
       res,
       data,
@@ -64,16 +61,28 @@ export class UsersController {
   }
 
   @Get(':id')
-  async show(@CurrentUser() actor: AuthUser, @Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+  async show(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseIntPipe) id: number,
+    @Res() res: Response,
+  ) {
     const target = await this.queryService.findByIdOrFail(id);
     this.caslAbilityFactory.authorize(actor, Action.View, { id: target.id });
 
-    return ApiResponse.success(res, toUserResource(target, actor, this.caslAbilityFactory), 'User detail');
+    return ApiResponse.success(
+      res,
+      toUserResource(target, actor, this.caslAbilityFactory),
+      'User detail',
+    );
   }
 
   @CheckPolicies((ability) => ability.can(Action.Create, 'User'))
   @Post()
-  async store(@CurrentUser() actor: AuthUser, @Body() dto: AdminCreateUserDto, @Res() res: Response) {
+  async store(
+    @CurrentUser() actor: AuthUser,
+    @Body() dto: AdminCreateUserDto,
+    @Res() res: Response,
+  ) {
     const user = await this.commandService.createByAdmin(dto);
     return ApiResponse.success(
       res,
@@ -94,11 +103,19 @@ export class UsersController {
     this.caslAbilityFactory.authorize(actor, Action.Update, { id: target.id });
 
     const updated = await this.commandService.updateByAdmin(id, dto);
-    return ApiResponse.success(res, toUserResource(updated, actor, this.caslAbilityFactory), 'User updated');
+    return ApiResponse.success(
+      res,
+      toUserResource(updated, actor, this.caslAbilityFactory),
+      'User updated',
+    );
   }
 
   @Delete(':id')
-  async destroy(@CurrentUser() actor: AuthUser, @Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+  async destroy(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseIntPipe) id: number,
+    @Res() res: Response,
+  ) {
     const target = await this.queryService.findByIdOrFail(id);
     this.caslAbilityFactory.authorize(actor, Action.Delete, { id: target.id });
 
@@ -107,29 +124,59 @@ export class UsersController {
   }
 
   @Post('ban')
-  async ban(@CurrentUser() actor: AuthUser, @Body() dto: TargetUserByIdDto, @Res() res: Response) {
+  async ban(
+    @CurrentUser() actor: AuthUser,
+    @Body() dto: TargetUserByIdDto,
+    @Res() res: Response,
+  ) {
     const target = await this.queryService.findByIdOrFail(dto.id);
-    this.caslAbilityFactory.authorize(actor, Action.ToggleActive, { id: target.id });
+    this.caslAbilityFactory.authorize(actor, Action.ToggleActive, {
+      id: target.id,
+    });
 
     const banned = await this.commandService.toggleActive(dto.id, false);
-    return ApiResponse.success(res, toUserResource(banned, actor, this.caslAbilityFactory), 'User banned');
+    return ApiResponse.success(
+      res,
+      toUserResource(banned, actor, this.caslAbilityFactory),
+      'User banned',
+    );
   }
 
   @Post('activate')
-  async activate(@CurrentUser() actor: AuthUser, @Body() dto: TargetUserByIdDto, @Res() res: Response) {
+  async activate(
+    @CurrentUser() actor: AuthUser,
+    @Body() dto: TargetUserByIdDto,
+    @Res() res: Response,
+  ) {
     const target = await this.queryService.findByIdOrFail(dto.id);
-    this.caslAbilityFactory.authorize(actor, Action.ToggleActive, { id: target.id });
+    this.caslAbilityFactory.authorize(actor, Action.ToggleActive, {
+      id: target.id,
+    });
 
     const activated = await this.commandService.toggleActive(dto.id, true);
-    return ApiResponse.success(res, toUserResource(activated, actor, this.caslAbilityFactory), 'User activated');
+    return ApiResponse.success(
+      res,
+      toUserResource(activated, actor, this.caslAbilityFactory),
+      'User activated',
+    );
   }
 
   @Post('toggle-admin')
-  async toggleAdmin(@CurrentUser() actor: AuthUser, @Body() dto: TargetUserByUserIdDto, @Res() res: Response) {
+  async toggleAdmin(
+    @CurrentUser() actor: AuthUser,
+    @Body() dto: TargetUserByUserIdDto,
+    @Res() res: Response,
+  ) {
     const target = await this.queryService.findByIdOrFail(dto.user_id);
-    this.caslAbilityFactory.authorize(actor, Action.ToggleAdmin, { id: target.id });
+    this.caslAbilityFactory.authorize(actor, Action.ToggleAdmin, {
+      id: target.id,
+    });
 
     const isNowAdmin = await this.commandService.toggleAdmin(dto.user_id);
-    return ApiResponse.success(res, true, isNowAdmin ? 'Admin granted' : 'Admin revoked');
+    return ApiResponse.success(
+      res,
+      true,
+      isNowAdmin ? 'Admin granted' : 'Admin revoked',
+    );
   }
 }

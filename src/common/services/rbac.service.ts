@@ -4,18 +4,6 @@ import { PrismaService } from '../../../prisma/prisma.service';
 /** Padanan `protected string $guard_name = 'api';` di App\Models\User.php lama. */
 const GUARD_NAME = 'api';
 
-/**
- * Padanan pemakaian spatie/laravel-permission (`$user->assignRole()`,
- * `$user->givePermissionTo()`, dst) di kode Laravel lama. Di sini
- * diimplementasikan lewat tabel Role/Permission/UserRole/UserPermission
- * hasil migrasi schema.prisma (lihat catatan simplifikasi RBAC di
- * schema.prisma). Semua lookup role/permission difilter guardName='api'
- * supaya konsisten dengan guard yang dipakai model User lama.
- *
- * PRASYARAT: tabel `roles` dan `permissions` sudah di-seed dengan nama
- * yang sama seperti App\Enums\Role / App\Enums\Permission lama
- * (super_admin, store_owner, staff, customer) — lihat prisma/seed.ts.
- */
 @Injectable()
 export class RbacService {
   private readonly logger = new Logger(RbacService.name);
@@ -23,7 +11,9 @@ export class RbacService {
   constructor(private readonly prisma: PrismaService) {}
 
   async assignRole(userId: number, roleName: string): Promise<void> {
-    const role = await this.prisma.role.findFirst({ where: { name: roleName, guardName: GUARD_NAME } });
+    const role = await this.prisma.role.findFirst({
+      where: { name: roleName, guardName: GUARD_NAME },
+    });
     if (!role) {
       this.logger.warn(`Role "${roleName}" belum di-seed, dilewati.`);
       return;
@@ -36,7 +26,9 @@ export class RbacService {
   }
 
   async removeRole(userId: number, roleName: string): Promise<void> {
-    const role = await this.prisma.role.findFirst({ where: { name: roleName, guardName: GUARD_NAME } });
+    const role = await this.prisma.role.findFirst({
+      where: { name: roleName, guardName: GUARD_NAME },
+    });
     if (!role) return;
     await this.prisma.userRole
       .delete({ where: { roleId_userId: { roleId: role.id, userId } } })
@@ -48,7 +40,9 @@ export class RbacService {
       where: { name: permissionName, guardName: GUARD_NAME },
     });
     if (!permission) {
-      this.logger.warn(`Permission "${permissionName}" belum di-seed, dilewati.`);
+      this.logger.warn(
+        `Permission "${permissionName}" belum di-seed, dilewati.`,
+      );
       return;
     }
     await this.prisma.userPermission.upsert({
@@ -58,18 +52,25 @@ export class RbacService {
     });
   }
 
-  async revokePermission(userId: number, permissionName: string): Promise<void> {
+  async revokePermission(
+    userId: number,
+    permissionName: string,
+  ): Promise<void> {
     const permission = await this.prisma.permission.findFirst({
       where: { name: permissionName, guardName: GUARD_NAME },
     });
     if (!permission) return;
     await this.prisma.userPermission
-      .delete({ where: { permissionId_userId: { permissionId: permission.id, userId } } })
+      .delete({
+        where: { permissionId_userId: { permissionId: permission.id, userId } },
+      })
       .catch(() => undefined);
   }
 
   async hasRole(userId: number, roleName: string): Promise<boolean> {
-    const role = await this.prisma.role.findFirst({ where: { name: roleName, guardName: GUARD_NAME } });
+    const role = await this.prisma.role.findFirst({
+      where: { name: roleName, guardName: GUARD_NAME },
+    });
     if (!role) return false;
     const link = await this.prisma.userRole.findUnique({
       where: { roleId_userId: { roleId: role.id, userId } },
@@ -79,31 +80,54 @@ export class RbacService {
 
   async hasAnyRole(userId: number, roleNames: string[]): Promise<boolean> {
     const count = await this.prisma.userRole.count({
-      where: { userId, role: { name: { in: roleNames }, guardName: GUARD_NAME } },
+      where: {
+        userId,
+        role: { name: { in: roleNames }, guardName: GUARD_NAME },
+      },
     });
     return count > 0;
   }
 
-  async hasPermission(userId: number, permissionName: string): Promise<boolean> {
+  async hasPermission(
+    userId: number,
+    permissionName: string,
+  ): Promise<boolean> {
     const direct = await this.prisma.userPermission.count({
-      where: { userId, permission: { name: permissionName, guardName: GUARD_NAME } },
+      where: {
+        userId,
+        permission: { name: permissionName, guardName: GUARD_NAME },
+      },
     });
     if (direct > 0) return true;
 
     const viaRole = await this.prisma.userRole.count({
       where: {
         userId,
-        role: { permissions: { some: { permission: { name: permissionName, guardName: GUARD_NAME } } } },
+        role: {
+          permissions: {
+            some: {
+              permission: { name: permissionName, guardName: GUARD_NAME },
+            },
+          },
+        },
       },
     });
     return viaRole > 0;
   }
 
   /** Dipakai AuthController untuk merangkum role+permission di response login/register. */
-  async getUserRoleAndPermissionNames(userId: number): Promise<{ roles: string[]; permissions: string[] }> {
+  async getUserRoleAndPermissionNames(
+    userId: number,
+  ): Promise<{ roles: string[]; permissions: string[] }> {
     const [roleLinks, permissionLinks] = await Promise.all([
-      this.prisma.userRole.findMany({ where: { userId }, include: { role: true } }),
-      this.prisma.userPermission.findMany({ where: { userId }, include: { permission: true } }),
+      this.prisma.userRole.findMany({
+        where: { userId },
+        include: { role: true },
+      }),
+      this.prisma.userPermission.findMany({
+        where: { userId },
+        include: { permission: true },
+      }),
     ]);
     return {
       roles: roleLinks.map((r) => r.role.name),

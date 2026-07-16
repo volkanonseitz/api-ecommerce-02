@@ -33,16 +33,6 @@ function meta(req: Request, ip: string): RequestMeta {
   return { ip, userAgent: req.headers['user-agent'] ?? 'Unknown' };
 }
 
-/**
- * Padanan App\Modules\User\Http\Controllers\AuthController.php.
- * Thin controller: validasi (lewat DTO + ValidationPipe global) -> Service
- * -> ApiResponse, tidak ada query Prisma langsung di sini.
- *
- * PERBEDAAN SENGAJA dari versi lama: field `token` tunggal (Sanctum)
- * berubah jadi `accessToken` + `refreshToken` (JWT dua token), sesuai
- * requirement migrasi. `sessionId` menggantikan `session_id` (dulu ID
- * personal_access_token, sekarang UUID baris user_sessions).
- */
 @Controller('auth')
 export class AuthController {
   constructor(

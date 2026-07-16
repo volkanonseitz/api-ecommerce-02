@@ -5,11 +5,6 @@ import { evaluatePasswordStrength } from '../../common/decorators/is-strong-pass
 
 const PASSWORD_HISTORY_LIMIT = 5;
 
-/**
- * Padanan App\Modules\User\Services\UserSecurityService.php.
- * enforceRateLimit() TIDAK di sini -> lihat common/services/rate-limiter.service.ts
- * (dipakai di AuthController, bukan spesifik ke satu user).
- */
 @Injectable()
 export class UsersSecurityService {
   constructor(private readonly prisma: PrismaService) {}
@@ -22,7 +17,10 @@ export class UsersSecurityService {
     });
   }
 
-  async isPasswordInHistory(userId: number, newPassword: string): Promise<boolean> {
+  async isPasswordInHistory(
+    userId: number,
+    newPassword: string,
+  ): Promise<boolean> {
     const history = await this.prisma.passwordHistory.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -37,7 +35,10 @@ export class UsersSecurityService {
     return false;
   }
 
-  async recordPasswordChange(userId: number, newPassword: string): Promise<void> {
+  async recordPasswordChange(
+    userId: number,
+    newPassword: string,
+  ): Promise<void> {
     const hash = await bcrypt.hash(newPassword, 12);
 
     await this.prisma.passwordHistory.create({
@@ -78,7 +79,11 @@ export class UsersSecurityService {
     });
   }
 
-  async revokeSession(userId: number, sessionDbId: number, currentSessionId: string) {
+  async revokeSession(
+    userId: number,
+    sessionDbId: number,
+    currentSessionId: string,
+  ) {
     const session = await this.prisma.userSession.findFirst({
       where: { id: sessionDbId, userId },
     });

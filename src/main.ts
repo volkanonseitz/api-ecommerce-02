@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -7,9 +7,6 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  // whitelist:true -> field yang tidak ada di DTO otomatis dibuang (padanan
-  // "hanya field yang di-validate() yang lewat" di FormRequest Laravel,
-  // mis. shop_id yang sengaja tidak ada di RegisterDto/UpdateProfileDto).
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -22,9 +19,14 @@ async function bootstrap() {
   app.enableCors();
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+
   await app.listen(port);
-  // eslint-disable-next-line no-console
-  console.log(`Server jalan di http://localhost:${port}/api`);
+
+  const logger = new Logger('Bootstrap');
+  logger.log(`Server jalan di http://localhost:${port}/api`);
 }
 
-bootstrap();
+bootstrap().catch((error: unknown) => {
+  console.error('Failed to start application:', error);
+  process.exit(1);
+});

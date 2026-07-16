@@ -3,11 +3,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
-/**
- * Guard global (dipasang di AppModule via APP_GUARD). Padanan middleware
- * `auth:sanctum` yang otomatis melindungi semua route KECUALI yang
- * ditandai @Public() (login, register, refresh, social-login).
- */
 @Injectable()
 export class JwtAccessGuard extends AuthGuard('jwt-access') {
   constructor(private reflector: Reflector) {

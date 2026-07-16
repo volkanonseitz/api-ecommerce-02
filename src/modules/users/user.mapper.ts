@@ -14,18 +14,16 @@ export interface UserWithRelations {
   profile?: unknown;
 }
 
-/**
- * Padanan App\Modules\User\Http\Resources\UserResource.php.
- * `shopId` hanya disertakan kalau requester berhak (Action.ViewShopAssignment),
- * persis seperti `$this->when(...)` di Resource lama — mencegah information
- * disclosure ke pihak yang tidak berhak.
- */
 export function toUserResource(
   user: UserWithRelations,
   requester: AuthUser,
   caslAbilityFactory: CaslAbilityFactory,
 ) {
-  const canViewShopAssignment = caslAbilityFactory.can(requester, Action.ViewShopAssignment, { id: user.id });
+  const canViewShopAssignment = caslAbilityFactory.can(
+    requester,
+    Action.ViewShopAssignment,
+    { id: user.id },
+  );
 
   return {
     id: user.id,

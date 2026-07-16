@@ -3,16 +3,6 @@ import { PrismaService } from '../../../prisma/prisma.service';
 
 const USER_WITH_RELATIONS = { profile: true, address: true } as const;
 
-/**
- * Operasi BACA seputar User — padanan UserQueryService.php (CQRS ringan,
- * dipisah dari UsersCommandService supaya query listing/report tidak
- * bercampur dengan operasi yang mengubah state).
- *
- * CATATAN: method lama `getAdminUsers()` (cache 15 menit) dan
- * `paginatedVendors()` / `hasShopAuthority()` sengaja TIDAK diporting di
- * sini karena menyentuh domain Shop yang belum dimigrasikan modulnya —
- * tambahkan lagi persis dengan pola di bawah begitu modul Shop sudah ada.
- */
 @Injectable()
 export class UsersQueryService {
   constructor(private readonly prisma: PrismaService) {}

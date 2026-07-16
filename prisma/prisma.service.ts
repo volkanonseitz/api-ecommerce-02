@@ -1,6 +1,6 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { PrismaClient } from '../generated/prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -8,17 +8,19 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    const databaseUrl = process.env.DATABASE_URL;
-    if (!databaseUrl) {
-      throw new Error('DATABASE_URL is not defined');
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error('DATABASE_URL belum diset di environment (.env).');
     }
-    const adapter = new PrismaMariaDb(databaseUrl);
-    super({ adapter });
+
+    super({ adapter: new PrismaMariaDb(connectionString) });
   }
-  async onModuleInit() {
+
+  async onModuleInit(): Promise<void> {
     await this.$connect();
   }
-  async onModuleDestroy() {
+
+  async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
   }
 }

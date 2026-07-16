@@ -1,14 +1,18 @@
 import { Type } from 'class-transformer';
-import { IsEmail, IsInt, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
+import {
+  IsEmail,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 import { IsStrongPassword } from '../../../common/decorators/is-strong-password.decorator';
-import { RegisterAddressDto, RegisterProfileDto } from '../../auth/dto/register-nested.dto';
+import {
+  RegisterAddressDto,
+  RegisterProfileDto,
+} from '../../auth/dto/register-nested.dto';
 
-/**
- * Padanan AdminCreateUserRequest.php.
- * Endpoint ini hanya boleh diakses actor dengan Action.Create (lihat
- * UsersController) — otorisasi dicek di controller lewat PoliciesGuard,
- * BUKAN di sini (DTO cuma validasi bentuk data).
- */
 export class AdminCreateUserDto {
   @IsString()
   @MaxLength(255)
@@ -18,7 +22,11 @@ export class AdminCreateUserDto {
   email!: string;
 
   // Aturan lama: min 8, upper+lower+digit, TANPA wajib karakter spesial.
-  @IsStrongPassword({ minLength: 8, requireSpecialChar: false, forbidRepeatingChars: false })
+  @IsStrongPassword({
+    minLength: 8,
+    requireSpecialChar: false,
+    forbidRepeatingChars: false,
+  })
   password!: string;
 
   @IsOptional()

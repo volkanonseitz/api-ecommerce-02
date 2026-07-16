@@ -8,10 +8,6 @@ import { RbacService } from '../../common/services/rbac.service';
 import { RegisterDto } from './dto/register.dto';
 import { SocialLoginService } from './social-login.service';
 import { EmailVerificationService } from './email-verification.service';
-// PENTING: Prisma 7 generator "prisma-client" pakai output custom
-// (generated/prisma/client) — tipe `User` TIDAK tersedia lagi dari
-// '@prisma/client' seperti versi lama, harus diimport dari path hasil
-// generate ini. Jalankan `npx prisma generate` dulu supaya folder ini ada.
 import type { User } from '../../../generated/prisma/client';
 import type { StringValue } from 'ms';
 import {
@@ -19,6 +15,7 @@ import {
   EmailUnverifiedException,
   InvalidCredentialsException,
 } from '../../common/exceptions/app.exceptions';
+import { Prisma } from '../../../generated/prisma/client';
 
 export interface RequestMeta {
   ip: string;
@@ -34,12 +31,6 @@ export interface TokenPair {
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
-/**
- * Padanan gabungan AuthService + AttemptLoginAction + RegisterUserAction
- * (Laravel). Logika lockout/brute-force/password-history dipisah ke
- * modules/users/security.service.ts (padanan UserSecurityService), sama
- * seperti pemisahan tanggung jawab di kode lama.
- */
 @Injectable()
 export class AuthService {
   constructor(
@@ -51,22 +42,19 @@ export class AuthService {
     private readonly emailVerificationService: EmailVerificationService,
   ) {}
 
-  /**
-   * Padanan AttemptLoginAction::execute().
-   * Melempar exception kustom untuk tiap status ('locked'/'unverified'/'invalid')
-   * supaya AllExceptionsFilter yang membentuk response, controller cukup
-   * fokus ke jalur sukses.
-   */
-  async attemptLogin(email: string, password: string, meta: RequestMeta): Promise<User> {
+  async attemptLogin(
+    email: string,
+    password: string,
+    meta: RequestMeta,
+  ): Promise<User> {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      // Mitigasi timing-attack: tetap lakukan hash compare walau user tidak
-      // ada, supaya waktu respons "email tidak ditemukan" vs "password salah"
-      // tidak bisa dibedakan penyerang. Dibungkus try/catch karena hash dummy
-      // di bawah cuma perlu makan waktu yang setara, bukan untuk divalidasi.
       await bcrypt
-        .compare('dummy_password', '$2b$12$CwTycUXWue0Thq9StjUM0uJ8i9G0G0Zk6q6c6Zk6c6Zk6c6Zk6c6O')
+        .compare(
+          'dummy_password',
+          '$2b$12$CwTycUXWue0Thq9StjUM0uJ8i9G0G0Zk6q6c6Zk6c6Zk6c6Zk6c6O',
+        )
         .catch(() => undefined);
       throw new InvalidCredentialsException();
     }
@@ -75,7 +63,11 @@ export class AuthService {
       throw new AccountLockedException(user.lockedUntil);
     }
 
-    if (!user.isActive || !user.password || !(await bcrypt.compare(password, user.password))) {
+    if (
+      !user.isActive ||
+      !user.password ||
+      !(await bcrypt.compare(password, user.password))
+    ) {
       await this.registerFailedLoginAttempt(user.id, user.failedLoginAttempts);
       throw new InvalidCredentialsException();
     }
@@ -98,7 +90,10 @@ export class AuthService {
     return this.prisma.user.findUniqueOrThrow({ where: { id: user.id } });
   }
 
-  private async registerFailedLoginAttempt(userId: number, currentAttempts: number): Promise<void> {
+  private async registerFailedLoginAttempt(
+    userId: number,
+    currentAttempts: number,
+  ): Promise<void> {
     const attempts = currentAttempts + 1;
     const data: { failedLoginAttempts: number; lockedUntil?: Date } = {
       failedLoginAttempts: attempts,
@@ -109,23 +104,16 @@ export class AuthService {
     await this.prisma.user.update({ where: { id: userId }, data });
   }
 
-  /**
-   * Padanan RegisterUserAction::execute() + event Registered (yang di
-   * Laravel otomatis memicu $user->sendEmailVerificationNotification()
-   * lewat SendEmailVerificationNotification listener bawaan framework).
-   * shop_id, is_active, dll TIDAK PERNAH ikut karena RegisterDto memang
-   * tidak membawa field itu sama sekali (whitelist eksplisit, lihat
-   * catatan di register.dto.ts).
-   */
   async register(dto: RegisterDto): Promise<User> {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (existing) {
       throw new ConflictException('Email sudah terdaftar.');
     }
 
-    // Defense in depth: permission yang diminta divalidasi ulang di sini,
-    // tidak pernah percaya begitu saja walau DTO sudah membatasi ke 'store_owner'.
-    const grantedPermission = dto.permission === 'store_owner' ? 'store_owner' : 'customer';
+    const grantedPermission =
+      dto.permission === 'store_owner' ? 'store_owner' : 'customer';
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
@@ -135,8 +123,6 @@ export class AuthService {
           name: dto.name,
           email: dto.email,
           password: passwordHash,
-          // emailVerifiedAt SENGAJA null (padanan MustVerifyEmail) — baru
-          // di-set setelah user klik link verifikasi (lihat email-verification.service.ts).
         },
       });
 
@@ -144,9 +130,11 @@ export class AuthService {
         await tx.userProfile.create({
           data: {
             customerId: created.id,
-            avatar: dto.profile.avatar ? { original: dto.profile.avatar } : undefined,
+            avatar: dto.profile.avatar
+              ? { original: dto.profile.avatar }
+              : undefined,
             bio: dto.profile.bio,
-            socials: dto.profile.socials as object | undefined,
+            socials: dto.profile.socials as Prisma.InputJsonValue,
           },
         });
       }
@@ -176,16 +164,27 @@ export class AuthService {
 
     // Fire-and-forget: kegagalan kirim email TIDAK boleh menggagalkan
     // registrasi (user masih bisa minta kirim ulang lewat POST /auth/email/resend).
-    this.emailVerificationService.sendVerificationEmail(user).catch(() => undefined);
+    this.emailVerificationService
+      .sendVerificationEmail(user)
+      .catch(() => undefined);
 
     return user;
   }
 
   /** Padanan SocialLoginService.php (handle()). */
-  async socialLogin(provider: 'facebook' | 'google', accessToken: string, meta: RequestMeta): Promise<User> {
-    const profile = await this.socialLoginService.fetchProfile(provider, accessToken);
+  async socialLogin(
+    provider: 'facebook' | 'google',
+    accessToken: string,
+    meta: RequestMeta,
+  ): Promise<User> {
+    const profile = await this.socialLoginService.fetchProfile(
+      provider,
+      accessToken,
+    );
 
-    const existingUser = await this.prisma.user.findUnique({ where: { email: profile.email } });
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: profile.email },
+    });
 
     if (existingUser) {
       const linked = await this.prisma.provider.findFirst({
@@ -201,7 +200,11 @@ export class AuthService {
     const user = await this.prisma.$transaction(async (tx) => {
       const upserted = await tx.user.upsert({
         where: { email: profile.email },
-        create: { email: profile.email, name: profile.name, emailVerifiedAt: new Date() },
+        create: {
+          email: profile.email,
+          name: profile.name,
+          emailVerifiedAt: new Date(),
+        },
         update: {},
       });
 
@@ -215,16 +218,24 @@ export class AuthService {
         });
       } else {
         await tx.provider.create({
-          data: { userId: upserted.id, provider, providerUserId: profile.providerId },
+          data: {
+            userId: upserted.id,
+            provider,
+            providerUserId: profile.providerId,
+          },
         });
       }
 
       if (profile.avatar) {
-        const existingProfile = await tx.userProfile.findUnique({ where: { customerId: upserted.id } });
+        const existingProfile = await tx.userProfile.findUnique({
+          where: { customerId: upserted.id },
+        });
         if (existingProfile) {
           await tx.userProfile.update({
             where: { customerId: upserted.id },
-            data: { avatar: { thumbnail: profile.avatar, original: profile.avatar } },
+            data: {
+              avatar: { thumbnail: profile.avatar, original: profile.avatar },
+            },
           });
         } else {
           await tx.userProfile.create({
@@ -248,7 +259,11 @@ export class AuthService {
       return upserted;
     });
 
-    const isStaffOrAbove = await this.rbac.hasAnyRole(user.id, ['super_admin', 'store_owner', 'staff']);
+    const isStaffOrAbove = await this.rbac.hasAnyRole(user.id, [
+      'super_admin',
+      'store_owner',
+      'staff',
+    ]);
     if (!isStaffOrAbove) {
       await this.rbac.grantPermission(user.id, 'customer');
       await this.rbac.assignRole(user.id, 'customer');
@@ -265,14 +280,16 @@ export class AuthService {
       { sub: userId, sid: sessionId },
       {
         secret: this.config.getOrThrow<string>('JWT_ACCESS_SECRET'),
-        expiresIn: (this.config.get<string>('JWT_ACCESS_EXPIRES_IN') ?? '15m') as StringValue,
+        expiresIn: (this.config.get<string>('JWT_ACCESS_EXPIRES_IN') ??
+          '15m') as StringValue,
       },
     );
     const refreshToken = await this.jwt.signAsync(
       { sub: userId, sid: sessionId },
       {
         secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
-        expiresIn: (this.config.get<string>('JWT_REFRESH_EXPIRES_IN') ?? '7d') as StringValue,
+        expiresIn: (this.config.get<string>('JWT_REFRESH_EXPIRES_IN') ??
+          '7d') as StringValue,
       },
     );
 
@@ -294,21 +311,27 @@ export class AuthService {
    * dipakai sekali (session row di-update ke sid baru), mendeteksi
    * replay/pencurian refresh token.
    */
-  async rotateTokenPair(userId: number, sessionDbId: number, meta: RequestMeta): Promise<TokenPair> {
+  async rotateTokenPair(
+    userId: number,
+    sessionDbId: number,
+    meta: RequestMeta,
+  ): Promise<TokenPair> {
     const sessionId = randomUUID();
 
     const accessToken = await this.jwt.signAsync(
       { sub: userId, sid: sessionId },
       {
         secret: this.config.getOrThrow<string>('JWT_ACCESS_SECRET'),
-        expiresIn: (this.config.get<string>('JWT_ACCESS_EXPIRES_IN') ?? '15m') as StringValue,
+        expiresIn: (this.config.get<string>('JWT_ACCESS_EXPIRES_IN') ??
+          '15m') as StringValue,
       },
     );
     const refreshToken = await this.jwt.signAsync(
       { sub: userId, sid: sessionId },
       {
         secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
-        expiresIn: (this.config.get<string>('JWT_REFRESH_EXPIRES_IN') ?? '7d') as StringValue,
+        expiresIn: (this.config.get<string>('JWT_REFRESH_EXPIRES_IN') ??
+          '7d') as StringValue,
       },
     );
 
@@ -327,6 +350,8 @@ export class AuthService {
 
   /** Padanan AuthService::logout() (satu sesi/device saat ini). */
   async logout(userId: number, sessionId: string): Promise<void> {
-    await this.prisma.userSession.deleteMany({ where: { userId, tokenId: sessionId } });
+    await this.prisma.userSession.deleteMany({
+      where: { userId, tokenId: sessionId },
+    });
   }
 }

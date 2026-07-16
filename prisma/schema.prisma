@@ -1,7 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
 }
 
+// Prisma ORM 7: connection URL TIDAK lagi ditaruh di sini, tapi di
+// prisma.config.ts (lihat file tersebut di root project).
 datasource db {
   provider = "mysql"
 }
@@ -58,16 +62,16 @@ enum OrderStatus {
 }
 
 enum PaymentStatus {
-  PENDING               @map("payment-pending")
-  PROCESSING            @map("payment-processing")
-  SUCCESS               @map("payment-success")
-  FAILED                @map("payment-failed")
-  REVERSAL              @map("payment-reversal")
-  REFUNDED              @map("payment-refunded")
-  CASH_ON_DELIVERY      @map("payment-cash-on-delivery")
-  CASH                  @map("payment-cash")
-  WALLET                @map("payment-wallet")
-  AWAITING_FOR_APPROVAL @map("payment-awaiting-for-approval")
+  PENDING                @map("payment-pending")
+  PROCESSING             @map("payment-processing")
+  SUCCESS                @map("payment-success")
+  FAILED                 @map("payment-failed")
+  REVERSAL               @map("payment-reversal")
+  REFUNDED               @map("payment-refunded")
+  CASH_ON_DELIVERY       @map("payment-cash-on-delivery")
+  CASH                   @map("payment-cash")
+  WALLET                 @map("payment-wallet")
+  AWAITING_FOR_APPROVAL  @map("payment-awaiting-for-approval")
 }
 
 enum WithdrawStatus {
@@ -159,30 +163,30 @@ model User {
   shop   Shop? @relation("UserCurrentShop", fields: [shopId], references: [id], onDelete: SetNull)
 
   // relasi 1-1 / 1-n
-  profile            UserProfile?
-  addresses          Address[]
-  ownedShops         Shop[]              @relation("ShopOwner")
-  shopMemberships    UserShop[]
-  wallet             Wallet?
-  providers          Provider[]
-  paymentGateways    PaymentGateway[]
-  sessions           UserSession[]
-  passwordHistory    PasswordHistory[]
-  coupons            Coupon[]
-  wishlists          Wishlist[]
-  reviews            Review[]
-  questions          Question[]
-  feedbacks          Feedback[]
-  abusiveReports     AbusiveReport[]
-  faqs               Faq[]
-  termsAndConditions TermsAndCondition[]
-  downloadTokens     DownloadToken[]
-  orderedFiles       OrderedFile[]
-  refunds            Refund[]
-  conversations      Conversation[]
-  messages           Message[]
-  participants       Participant[]
-  ordersAsCustomer   Order[]             @relation("OrderCustomer")
+  profile              UserProfile?
+  addresses            Address[]
+  ownedShops           Shop[]              @relation("ShopOwner")
+  shopMemberships      UserShop[]
+  wallet               Wallet?
+  providers            Provider[]
+  paymentGateways      PaymentGateway[]
+  sessions             UserSession[]
+  passwordHistory      PasswordHistory[]
+  coupons              Coupon[]
+  wishlists            Wishlist[]
+  reviews              Review[]
+  questions            Question[]
+  feedbacks            Feedback[]
+  abusiveReports       AbusiveReport[]
+  faqs                 Faq[]
+  termsAndConditions   TermsAndCondition[]
+  downloadTokens       DownloadToken[]
+  orderedFiles         OrderedFile[]
+  refunds              Refund[]
+  conversations        Conversation[]
+  messages             Message[]
+  participants         Participant[]
+  ordersAsCustomer     Order[]             @relation("OrderCustomer")
 
   notifyLogsReceived NotifyLog[] @relation("NotifyReceiver")
   notifyLogsSent     NotifyLog[] @relation("NotifySender")
@@ -332,25 +336,25 @@ model Shop {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  staff              User[]              @relation("UserCurrentShop")
-  members            UserShop[]
-  products           Product[]
-  attributes         Attribute[]
-  coupons            Coupon[]
-  orders             Order[]
-  balance            Balance?
-  withdraws          Withdraw[]
-  reviews            Review[]
-  questions          Question[]
-  conversations      Conversation[]
-  participants       Participant[]
-  faqs               Faq[]
-  termsAndConditions TermsAndCondition[]
-  refunds            Refund[]
-  refundPolicies     RefundPolicy[]
-  categories         CategoryShop[]
-  storeNoticeShop    StoreNoticeShop[]
-  ownershipTransfers OwnershipTransfer[]
+  staff                User[]                @relation("UserCurrentShop")
+  members              UserShop[]
+  products             Product[]
+  attributes           Attribute[]
+  coupons              Coupon[]
+  orders               Order[]
+  balance              Balance?
+  withdraws            Withdraw[]
+  reviews              Review[]
+  questions            Question[]
+  conversations        Conversation[]
+  participants         Participant[]
+  faqs                 Faq[]
+  termsAndConditions   TermsAndCondition[]
+  refunds              Refund[]
+  refundPolicies       RefundPolicy[]
+  categories           CategoryShop[]
+  storeNoticeShop      StoreNoticeShop[]
+  ownershipTransfers   OwnershipTransfer[]
 
   @@map("shops")
 }
@@ -366,17 +370,17 @@ model UserShop {
 }
 
 model Balance {
-  id                  Int      @id @default(autoincrement())
-  shopId              Int      @unique @map("shop_id")
-  shop                Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  adminCommissionRate Float?   @map("admin_commission_rate")
-  totalEarnings       Float    @default(0) @map("total_earnings")
-  withdrawnAmount     Float    @default(0) @map("withdrawn_amount")
-  currentBalance      Float    @default(0) @map("current_balance")
-  isCustomCommission  Boolean  @default(false) @map("is_custom_commission")
-  paymentInfo         Json?    @map("payment_info")
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+  id                   Int      @id @default(autoincrement())
+  shopId               Int      @unique @map("shop_id")
+  shop                 Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  adminCommissionRate  Float?   @map("admin_commission_rate")
+  totalEarnings        Float    @default(0) @map("total_earnings")
+  withdrawnAmount      Float    @default(0) @map("withdrawn_amount")
+  currentBalance       Float    @default(0) @map("current_balance")
+  isCustomCommission   Boolean  @default(false) @map("is_custom_commission")
+  paymentInfo          Json?    @map("payment_info")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
   @@map("balances")
 }
@@ -468,20 +472,20 @@ model Type {
 }
 
 model Category {
-  id          Int        @id @default(autoincrement())
-  name        String     @db.VarChar(255)
-  slug        String     @db.VarChar(255)
-  language    String     @default("en") @db.VarChar(255)
-  icon        String?    @db.VarChar(255)
-  image       Json?
-  bannerImage Json?      @map("banner_image")
-  details     String?    @db.Text
-  parentId    Int?       @map("parent")
-  parent      Category?  @relation("CategoryParent", fields: [parentId], references: [id], onDelete: Cascade)
-  children    Category[] @relation("CategoryParent")
-  deletedAt   DateTime?  @map("deleted_at")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(255)
+  slug         String    @db.VarChar(255)
+  language     String    @default("en") @db.VarChar(255)
+  icon         String?   @db.VarChar(255)
+  image        Json?
+  bannerImage  Json?     @map("banner_image")
+  details      String?   @db.Text
+  parentId     Int?      @map("parent")
+  parent       Category? @relation("CategoryParent", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Category[] @relation("CategoryParent")
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   products CategoryProduct[]
   shops    CategoryShop[]
@@ -490,66 +494,66 @@ model Category {
 }
 
 model Product {
-  id                        Int                     @id @default(autoincrement())
-  name                      String                  @db.VarChar(255)
-  slug                      String                  @db.VarChar(255)
-  description               String?                 @db.Text
-  typeId                    Int                     @map("type_id")
-  type                      Type                    @relation(fields: [typeId], references: [id], onDelete: Cascade)
-  price                     Float?
-  shopId                    Int?                    @map("shop_id")
-  shop                      Shop?                   @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  authorId                  Int?                    @map("author_id")
-  author                    Author?                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  manufacturerId            Int?                    @map("manufacturer_id")
-  manufacturer              Manufacturer?           @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
-  isDigital                 Boolean                 @default(false) @map("is_digital")
-  isExternal                Boolean                 @default(false) @map("is_external")
-  externalProductUrl        String?                 @map("external_product_url") @db.VarChar(255)
-  externalProductButtonText String?                 @map("external_product_button_text") @db.VarChar(255)
-  blockedDates              String?                 @map("blocked_dates") @db.VarChar(255)
-  salePrice                 Float?                  @map("sale_price")
-  language                  String                  @default("en") @db.VarChar(255)
-  minPrice                  Float?                  @map("min_price")
-  maxPrice                  Float?                  @map("max_price")
-  sku                       String?                 @db.VarChar(255)
-  quantity                  Int                     @default(0)
-  soldQuantity              Int                     @default(0) @map("sold_quantity")
-  inStock                   Boolean                 @default(true) @map("in_stock")
-  isTaxable                 Boolean                 @default(false) @map("is_taxable")
-  inFlashSale               Boolean                 @default(false) @map("in_flash_sale")
-  shippingClassId           Int?                    @map("shipping_class_id")
-  shippingClass             ShippingClass?          @relation(fields: [shippingClassId], references: [id])
-  status                    ProductStatus           @default(draft)
-  visibility                ProductVisibilityStatus @default(visibility_public)
-  productType               ProductType             @default(simple) @map("product_type")
-  unit                      String                  @db.VarChar(255)
-  height                    String?                 @db.VarChar(255)
-  width                     String?                 @db.VarChar(255)
-  length                    String?                 @db.VarChar(255)
-  image                     Json?
-  video                     Json?
-  gallery                   Json?
-  deletedAt                 DateTime?               @map("deleted_at")
-  createdAt                 DateTime                @default(now()) @map("created_at")
-  updatedAt                 DateTime                @updatedAt @map("updated_at")
+  id                         Int                      @id @default(autoincrement())
+  name                       String                   @db.VarChar(255)
+  slug                       String                   @db.VarChar(255)
+  description                String?                  @db.Text
+  typeId                     Int                      @map("type_id")
+  type                       Type                     @relation(fields: [typeId], references: [id], onDelete: Cascade)
+  price                      Float?
+  shopId                     Int?                     @map("shop_id")
+  shop                       Shop?                    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  authorId                   Int?                     @map("author_id")
+  author                     Author?                  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  manufacturerId             Int?                     @map("manufacturer_id")
+  manufacturer               Manufacturer?            @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
+  isDigital                  Boolean                  @default(false) @map("is_digital")
+  isExternal                 Boolean                  @default(false) @map("is_external")
+  externalProductUrl         String?                  @map("external_product_url") @db.VarChar(255)
+  externalProductButtonText  String?                  @map("external_product_button_text") @db.VarChar(255)
+  blockedDates               String?                  @map("blocked_dates") @db.VarChar(255)
+  salePrice                  Float?                   @map("sale_price")
+  language                   String                   @default("en") @db.VarChar(255)
+  minPrice                   Float?                   @map("min_price")
+  maxPrice                   Float?                   @map("max_price")
+  sku                        String?                  @db.VarChar(255)
+  quantity                   Int                      @default(0)
+  soldQuantity               Int                      @default(0) @map("sold_quantity")
+  inStock                    Boolean                  @default(true) @map("in_stock")
+  isTaxable                  Boolean                  @default(false) @map("is_taxable")
+  inFlashSale                Boolean                  @default(false) @map("in_flash_sale")
+  shippingClassId            Int?                     @map("shipping_class_id")
+  shippingClass              ShippingClass?           @relation(fields: [shippingClassId], references: [id])
+  status                     ProductStatus            @default(draft)
+  visibility                 ProductVisibilityStatus  @default(visibility_public)
+  productType                ProductType              @default(simple) @map("product_type")
+  unit                       String                   @db.VarChar(255)
+  height                     String?                  @db.VarChar(255)
+  width                      String?                  @db.VarChar(255)
+  length                     String?                  @db.VarChar(255)
+  image                      Json?
+  video                      Json?
+  gallery                    Json?
+  deletedAt                  DateTime?                @map("deleted_at")
+  createdAt                  DateTime                 @default(now()) @map("created_at")
+  updatedAt                  DateTime                 @updatedAt @map("updated_at")
 
-  variationOptions          VariationOption[]
-  orderProducts             OrderProduct[]
-  categories                CategoryProduct[]
-  attributes                AttributeProduct[]
-  tags                      ProductTag[]
-  reviews                   Review[]
-  questions                 Question[]
-  wishlists                 Wishlist[]
-  meta                      ProductMeta[]
-  availabilities            Availability[]
-  dropoffLocations          DropoffLocationProduct[]
-  pickupLocations           PickupLocationProduct[]
-  features                  FeatureProduct[]
-  deposits                  DepositProduct[]
-  persons                   PersonProduct[]
-  flashSaleProducts         FlashSaleProduct[]
+  variationOptions      VariationOption[]
+  orderProducts         OrderProduct[]
+  categories            CategoryProduct[]
+  attributes            AttributeProduct[]
+  tags                  ProductTag[]
+  reviews               Review[]
+  questions             Question[]
+  wishlists             Wishlist[]
+  meta                  ProductMeta[]
+  availabilities        Availability[]
+  dropoffLocations      DropoffLocationProduct[]
+  pickupLocations       PickupLocationProduct[]
+  features              FeatureProduct[]
+  deposits              DepositProduct[]
+  persons               PersonProduct[]
+  flashSaleProducts     FlashSaleProduct[]
   flashSaleRequestsProducts FlashSaleRequestsProduct[]
 
   @@map("products")
@@ -570,22 +574,22 @@ model ProductMeta {
 }
 
 model VariationOption {
-  id           Int      @id @default(autoincrement())
-  title        String   @db.VarChar(255)
+  id           Int       @id @default(autoincrement())
+  title        String    @db.VarChar(255)
   image        Json?
-  isDigital    Boolean  @default(false) @map("is_digital")
-  price        String   @db.VarChar(255)
-  salePrice    String?  @map("sale_price") @db.VarChar(255)
-  language     String   @default("en") @db.VarChar(255)
+  isDigital    Boolean   @default(false) @map("is_digital")
+  price        String    @db.VarChar(255)
+  salePrice    String?   @map("sale_price") @db.VarChar(255)
+  language     String    @default("en") @db.VarChar(255)
   quantity     Int
-  soldQuantity Int      @default(0) @map("sold_quantity")
-  isDisable    Boolean  @default(false) @map("is_disable")
-  sku          String?  @db.VarChar(255)
+  soldQuantity Int       @default(0) @map("sold_quantity")
+  isDisable    Boolean   @default(false) @map("is_disable")
+  sku          String?   @db.VarChar(255)
   options      Json
-  productId    Int?     @map("product_id")
-  product      Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  productId    Int?      @map("product_id")
+  product      Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   orderProducts OrderProduct[]
   reviews       Review[]
@@ -595,21 +599,21 @@ model VariationOption {
 }
 
 model Author {
-  id         Int      @id @default(autoincrement())
-  name       String   @db.VarChar(255)
-  isApproved Boolean  @default(false) @map("is_approved")
-  image      Json?
-  coverImage Json?    @map("cover_image")
-  slug       String   @db.VarChar(255)
-  language   String   @default("en") @db.VarChar(255)
-  bio        String?  @db.Text
-  quote      String?  @db.Text
-  born       String?  @db.VarChar(255)
-  death      String?  @db.VarChar(255)
-  languages  String?  @db.VarChar(255)
-  socials    Json?
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  isApproved  Boolean  @default(false) @map("is_approved")
+  image       Json?
+  coverImage  Json?    @map("cover_image")
+  slug        String   @db.VarChar(255)
+  language    String   @default("en") @db.VarChar(255)
+  bio         String?  @db.Text
+  quote       String?  @db.Text
+  born        String?  @db.VarChar(255)
+  death       String?  @db.VarChar(255)
+  languages   String?  @db.VarChar(255)
+  socials     Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   products Product[]
 
@@ -673,15 +677,15 @@ model Attribute {
 }
 
 model AttributeValue {
-  id          Int       @id @default(autoincrement())
-  slug        String    @db.VarChar(255)
-  attributeId Int       @map("attribute_id")
+  id          Int      @id @default(autoincrement())
+  slug        String   @db.VarChar(255)
+  attributeId Int      @map("attribute_id")
   attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
-  value       String    @db.VarChar(255)
-  language    String    @default("en") @db.VarChar(255)
-  meta        String?   @db.VarChar(255)
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  value       String   @db.VarChar(255)
+  language    String   @default("en") @db.VarChar(255)
+  meta        String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   products AttributeProduct[]
 
@@ -689,13 +693,13 @@ model AttributeValue {
 }
 
 model AttributeProduct {
-  id               Int            @id @default(autoincrement())
-  attributeValueId Int            @map("attribute_value_id")
-  attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
-  productId        Int            @map("product_id")
-  product          Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt        DateTime       @default(now()) @map("created_at")
-  updatedAt        DateTime       @updatedAt @map("updated_at")
+  id               Int             @id @default(autoincrement())
+  attributeValueId Int             @map("attribute_value_id")
+  attributeValue   AttributeValue  @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+  productId        Int             @map("product_id")
+  product          Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
 
   @@map("attribute_product")
 }
@@ -763,48 +767,48 @@ model TaxClass {
 // ============================================================================
 
 model Order {
-  id                    Int           @id @default(autoincrement())
-  trackingNumber        String        @unique @map("tracking_number") @db.VarChar(255)
-  customerId            Int?          @map("customer_id")
-  customer              User?         @relation("OrderCustomer", fields: [customerId], references: [id])
-  customerContact       String        @map("customer_contact") @db.VarChar(255)
-  customerName          String?       @map("customer_name") @db.VarChar(255)
-  amount                Float
-  salesTax              Float?        @map("sales_tax")
-  paidTotal             Float?        @map("paid_total")
-  total                 Float?
-  note                  String?       @db.LongText
-  language              String        @default("en") @db.VarChar(255)
-  cancelledAmount       Decimal       @default(0) @map("cancelled_amount") @db.Decimal(8, 2)
-  cancelledTax          Decimal       @default(0) @map("cancelled_tax") @db.Decimal(8, 2)
-  cancelledDeliveryFee  Decimal       @default(0) @map("cancelled_delivery_fee") @db.Decimal(8, 2)
-  couponId              Int?          @map("coupon_id")
-  parentId              Int?          @map("parent_id")
-  parent                Order?        @relation("OrderChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children              Order[]       @relation("OrderChildren")
-  shopId                Int?          @map("shop_id")
-  shop                  Shop?         @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  discount              Float?
-  paymentGateway        String?       @map("payment_gateway") @db.VarChar(255)
-  alteredPaymentGateway String?       @map("altered_payment_gateway") @db.VarChar(255)
-  shippingAddress       Json?         @map("shipping_address")
-  billingAddress        Json?         @map("billing_address")
-  logisticsProvider     Int?          @map("logistics_provider")
-  deliveryFee           Float?        @map("delivery_fee")
-  deliveryTime          String?       @map("delivery_time") @db.VarChar(255)
-  orderStatus           OrderStatus   @default(PENDING) @map("order_status")
-  paymentStatus         PaymentStatus @default(PENDING) @map("payment_status")
-  deletedAt             DateTime?     @map("deleted_at")
-  createdAt             DateTime      @default(now()) @map("created_at")
-  updatedAt             DateTime      @updatedAt @map("updated_at")
+  id                     Int           @id @default(autoincrement())
+  trackingNumber         String        @unique @map("tracking_number") @db.VarChar(255)
+  customerId             Int?          @map("customer_id")
+  customer               User?         @relation("OrderCustomer", fields: [customerId], references: [id])
+  customerContact        String        @map("customer_contact") @db.VarChar(255)
+  customerName           String?       @map("customer_name") @db.VarChar(255)
+  amount                 Float
+  salesTax               Float?        @map("sales_tax")
+  paidTotal              Float?        @map("paid_total")
+  total                  Float?
+  note                   String?       @db.LongText
+  language               String        @default("en") @db.VarChar(255)
+  cancelledAmount        Decimal       @default(0) @map("cancelled_amount") @db.Decimal(8, 2)
+  cancelledTax           Decimal       @default(0) @map("cancelled_tax") @db.Decimal(8, 2)
+  cancelledDeliveryFee   Decimal       @default(0) @map("cancelled_delivery_fee") @db.Decimal(8, 2)
+  couponId               Int?          @map("coupon_id")
+  parentId               Int?          @map("parent_id")
+  parent                 Order?        @relation("OrderChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children               Order[]       @relation("OrderChildren")
+  shopId                 Int?          @map("shop_id")
+  shop                   Shop?         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  discount               Float?
+  paymentGateway         String?       @map("payment_gateway") @db.VarChar(255)
+  alteredPaymentGateway  String?       @map("altered_payment_gateway") @db.VarChar(255)
+  shippingAddress        Json?         @map("shipping_address")
+  billingAddress         Json?         @map("billing_address")
+  logisticsProvider      Int?          @map("logistics_provider")
+  deliveryFee            Float?        @map("delivery_fee")
+  deliveryTime           String?       @map("delivery_time") @db.VarChar(255)
+  orderStatus            OrderStatus   @default(PENDING) @map("order_status")
+  paymentStatus          PaymentStatus @default(PENDING) @map("payment_status")
+  deletedAt              DateTime?     @map("deleted_at")
+  createdAt              DateTime      @default(now()) @map("created_at")
+  updatedAt              DateTime      @updatedAt @map("updated_at")
 
-  products       OrderProduct[]
-  paymentIntents PaymentIntent[]
-  walletPoints   OrderWalletPoint[]
-  refunds        Refund[]
-  reviews        Review[]
-  availabilities Availability[]
-  orderedFiles   OrderedFile[]
+  products         OrderProduct[]
+  paymentIntents   PaymentIntent[]
+  walletPoints     OrderWalletPoint[]
+  refunds          Refund[]
+  reviews          Review[]
+  availabilities   Availability[]
+  orderedFiles     OrderedFile[]
 
   @@map("orders")
 }
@@ -828,25 +832,25 @@ model OrderProduct {
 }
 
 model Coupon {
-  id                Int        @id @default(autoincrement())
-  code              String     @db.VarChar(255)
-  language          String     @default("en") @db.VarChar(255)
-  description       String?    @db.Text
-  image             Json?
-  type              CouponType @default(fixed)
-  amount            Float      @default(0)
-  minimumCartAmount Float      @default(0) @map("minimum_cart_amount")
-  activeFrom        String     @map("active_from") @db.VarChar(255)
-  expireAt          String     @map("expire_at") @db.VarChar(255)
-  target            Boolean    @default(false)
-  isApprove         Boolean    @default(false) @map("is_approve")
-  shopId            Int?       @map("shop_id")
-  shop              Shop?      @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  userId            Int?       @map("user_id")
-  user              User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deletedAt         DateTime?  @map("deleted_at")
-  createdAt         DateTime   @default(now()) @map("created_at")
-  updatedAt         DateTime   @updatedAt @map("updated_at")
+  id                 Int        @id @default(autoincrement())
+  code               String     @db.VarChar(255)
+  language           String     @default("en") @db.VarChar(255)
+  description        String?    @db.Text
+  image              Json?
+  type               CouponType @default(fixed)
+  amount             Float      @default(0)
+  minimumCartAmount  Float      @default(0) @map("minimum_cart_amount")
+  activeFrom         String     @map("active_from") @db.VarChar(255)
+  expireAt           String     @map("expire_at") @db.VarChar(255)
+  target             Boolean    @default(false)
+  isApprove          Boolean    @default(false) @map("is_approve")
+  shopId             Int?       @map("shop_id")
+  shop               Shop?      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  userId             Int?       @map("user_id")
+  user               User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deletedAt          DateTime?  @map("deleted_at")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
 
   @@map("coupons")
 }
@@ -886,14 +890,14 @@ model DeliveryTime {
 // ============================================================================
 
 model PaymentGateway {
-  id          Int       @id @default(autoincrement())
-  userId      Int       @map("user_id")
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  customerId  String    @map("customer_id") @db.VarChar(255)
-  gatewayName String?   @map("gateway_name") @db.VarChar(255)
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customerId  String   @map("customer_id") @db.VarChar(255)
+  gatewayName String?  @map("gateway_name") @db.VarChar(255)
   deletedAt   DateTime? @map("deleted_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   paymentMethods PaymentMethod[]
 
@@ -937,15 +941,15 @@ model PaymentMethod {
 }
 
 model PaymentIntent {
-  id                Int       @id @default(autoincrement())
-  orderId           Int?      @map("order_id")
-  order             Order?    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  trackingNumber    String?   @map("tracking_number") @db.VarChar(255)
-  paymentGateway    String?   @map("payment_gateway") @db.VarChar(255)
-  paymentIntentInfo Json?     @map("payment_intent_info")
-  deletedAt         DateTime? @map("deleted_at")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  id                 Int       @id @default(autoincrement())
+  orderId            Int?      @map("order_id")
+  order               Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  trackingNumber     String?   @map("tracking_number") @db.VarChar(255)
+  paymentGateway     String?   @map("payment_gateway") @db.VarChar(255)
+  paymentIntentInfo  Json?     @map("payment_intent_info")
+  deletedAt          DateTime? @map("deleted_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
   @@map("payment_intents")
 }
@@ -993,18 +997,18 @@ model RefundReason {
 }
 
 model RefundPolicy {
-  id          Int                @id @default(autoincrement())
-  title       String             @db.VarChar(255)
-  slug        String             @unique @db.VarChar(255)
-  description String?            @db.Text
-  target      RefundPolicyTarget @default(vendor)
-  language    String             @default("en") @db.VarChar(255)
-  status      RefundPolicyStatus @default(pending)
-  shopId      Int?               @map("shop_id")
-  shop        Shop?              @relation(fields: [shopId], references: [id], onDelete: SetNull)
-  deletedAt   DateTime?          @map("deleted_at")
-  createdAt   DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime           @updatedAt @map("updated_at")
+  id          Int                 @id @default(autoincrement())
+  title       String              @db.VarChar(255)
+  slug        String              @unique @db.VarChar(255)
+  description String?             @db.Text
+  target      RefundPolicyTarget  @default(vendor)
+  language    String              @default("en") @db.VarChar(255)
+  status      RefundPolicyStatus  @default(pending)
+  shopId      Int?                @map("shop_id")
+  shop        Shop?               @relation(fields: [shopId], references: [id], onDelete: SetNull)
+  deletedAt   DateTime?           @map("deleted_at")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
 
   refunds Refund[]
 
@@ -1049,14 +1053,14 @@ model Attachment {
 
 // Polymorphic (fileable_type / fileable_id) — join manual di service layer
 model DigitalFile {
-  id           Int      @id @default(autoincrement())
-  attachmentId Int      @map("attachment_id")
-  url          String   @db.VarChar(255)
-  fileName     String   @map("file_name") @db.VarChar(255)
-  fileableType String   @map("fileable_type") @db.VarChar(255)
-  fileableId   Int      @map("fileable_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id            Int      @id @default(autoincrement())
+  attachmentId  Int      @map("attachment_id")
+  url           String   @db.VarChar(255)
+  fileName      String   @map("file_name") @db.VarChar(255)
+  fileableType  String   @map("fileable_type") @db.VarChar(255)
+  fileableId    Int      @map("fileable_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   orderedFiles   OrderedFile[]
   downloadTokens DownloadToken[]
@@ -1212,9 +1216,8 @@ model Resource {
 model DropoffLocationProduct {
   resourceId Int      @map("resource_id")
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-
-  productId Int     @map("product_id")
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  Int      @map("product_id")
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@id([resourceId, productId])
   @@map("dropoff_location_product")
@@ -1223,9 +1226,8 @@ model DropoffLocationProduct {
 model PickupLocationProduct {
   resourceId Int      @map("resource_id")
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-
-  productId Int     @map("product_id")
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  Int      @map("product_id")
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@id([resourceId, productId])
   @@map("pickup_location_product")
@@ -1234,9 +1236,8 @@ model PickupLocationProduct {
 model FeatureProduct {
   resourceId Int      @map("resource_id")
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-
-  productId Int     @map("product_id")
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  Int      @map("product_id")
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@id([resourceId, productId])
   @@map("feature_product")
@@ -1245,9 +1246,8 @@ model FeatureProduct {
 model DepositProduct {
   resourceId Int      @map("resource_id")
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-
-  productId Int     @map("product_id")
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  Int      @map("product_id")
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@id([resourceId, productId])
   @@map("deposit_product")
@@ -1256,9 +1256,8 @@ model DepositProduct {
 model PersonProduct {
   resourceId Int      @map("resource_id")
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-
-  productId Int     @map("product_id")
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  Int      @map("product_id")
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@id([resourceId, productId])
   @@map("person_product")
@@ -1302,20 +1301,20 @@ model Banner {
 }
 
 model Faq {
-  id             Int       @id @default(autoincrement())
-  userId         Int       @map("user_id")
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shopId         Int?      @map("shop_id")
-  shop           Shop?     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  faqTitle       String    @map("faq_title") @db.Text
-  slug           String    @db.VarChar(255)
-  faqDescription String    @map("faq_description") @db.Text
-  faqType        String?   @map("faq_type") @db.VarChar(255)
-  issuedBy       String?   @map("issued_by") @db.VarChar(255)
-  language       String?   @db.VarChar(255)
-  deletedAt      DateTime? @map("deleted_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shopId          Int?      @map("shop_id")
+  shop            Shop?     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  faqTitle        String    @map("faq_title") @db.Text
+  slug            String    @db.VarChar(255)
+  faqDescription  String    @map("faq_description") @db.Text
+  faqType         String?   @map("faq_type") @db.VarChar(255)
+  issuedBy        String?   @map("issued_by") @db.VarChar(255)
+  language        String?   @db.VarChar(255)
+  deletedAt       DateTime? @map("deleted_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   @@map("faqs")
 }
@@ -1366,9 +1365,8 @@ model StoreNotice {
 model StoreNoticeUser {
   storeNoticeId Int         @map("store_notice_id")
   storeNotice   StoreNotice @relation(fields: [storeNoticeId], references: [id], onDelete: Cascade)
-
-  userId Int  @map("user_id")
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        Int         @map("user_id")
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([storeNoticeId, userId])
   @@map("store_notice_user")
@@ -1377,9 +1375,8 @@ model StoreNoticeUser {
 model StoreNoticeShop {
   storeNoticeId Int         @map("store_notice_id")
   storeNotice   StoreNotice @relation(fields: [storeNoticeId], references: [id], onDelete: Cascade)
-
-  shopId Int  @map("shop_id")
-  shop   Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  shopId        Int         @map("shop_id")
+  shop          Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@id([storeNoticeId, shopId])
   @@map("store_notice_shop")
@@ -1388,11 +1385,9 @@ model StoreNoticeShop {
 model StoreNoticeRead {
   storeNoticeId Int         @map("store_notice_id")
   storeNotice   StoreNotice @relation(fields: [storeNoticeId], references: [id], onDelete: Cascade)
-
-  userId Int  @map("user_id")
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  isRead Boolean @default(false) @map("is_read")
+  userId        Int         @map("user_id")
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isRead        Boolean     @default(false) @map("is_read")
 
   @@id([storeNoticeId, userId])
   @@map("store_notice_read")
@@ -1452,19 +1447,19 @@ model Participant {
 }
 
 model NotifyLog {
-  id                 Int       @id @default(autoincrement())
-  receiverId         Int       @map("receiver")
-  receiver           User      @relation("NotifyReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  senderId           Int?      @map("sender")
-  sender             User?     @relation("NotifySender", fields: [senderId], references: [id], onDelete: Cascade)
-  notifyType         String?   @map("notify_type") @db.Text
-  notifyReceiverType String?   @map("notify_receiver_type") @db.Text
-  isRead             Boolean   @default(false) @map("is_read")
-  notifyTracker      String?   @map("notify_tracker") @db.Text
-  notifyText         String?   @map("notify_text") @db.Text
-  deletedAt          DateTime? @map("deleted_at")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
+  id                  Int       @id @default(autoincrement())
+  receiverId          Int       @map("receiver")
+  receiver            User      @relation("NotifyReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  senderId            Int?      @map("sender")
+  sender              User?     @relation("NotifySender", fields: [senderId], references: [id], onDelete: Cascade)
+  notifyType          String?   @map("notify_type") @db.Text
+  notifyReceiverType  String?   @map("notify_receiver_type") @db.Text
+  isRead              Boolean   @default(false) @map("is_read")
+  notifyTracker       String?   @map("notify_tracker") @db.Text
+  notifyText          String?   @map("notify_text") @db.Text
+  deletedAt           DateTime? @map("deleted_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   @@map("notify_logs")
 }
@@ -1474,22 +1469,22 @@ model NotifyLog {
 // ============================================================================
 
 model FlashSale {
-  id          Int           @id @default(autoincrement())
-  title       String        @db.VarChar(255)
-  slug        String        @db.VarChar(255)
-  description String?       @db.Text
-  startDate   DateTime      @default(now()) @map("start_date")
-  endDate     DateTime      @map("end_date")
-  saleStatus  Boolean       @default(false) @map("sale_status")
-  type        FlashSaleType @default(percentage)
-  rate        Int?
-  saleBuilder Json?         @map("sale_builder")
-  image       Json?
-  coverImage  Json?         @map("cover_image")
-  language    String?       @db.VarChar(255)
-  deletedAt   DateTime?     @map("deleted_at")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  id           Int           @id @default(autoincrement())
+  title        String        @db.VarChar(255)
+  slug         String        @db.VarChar(255)
+  description  String?       @db.Text
+  startDate    DateTime      @default(now()) @map("start_date")
+  endDate      DateTime      @map("end_date")
+  saleStatus   Boolean       @default(false) @map("sale_status")
+  type         FlashSaleType @default(percentage)
+  rate         Int?
+  saleBuilder  Json?         @map("sale_builder")
+  image        Json?
+  coverImage   Json?         @map("cover_image")
+  language     String?       @db.VarChar(255)
+  deletedAt    DateTime?     @map("deleted_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
 
   requests FlashSaleRequest[]
   products FlashSaleProduct[]
@@ -1518,9 +1513,8 @@ model FlashSaleRequest {
 model FlashSaleProduct {
   flashSaleId Int       @map("flash_sale_id")
   flashSale   FlashSale @relation(fields: [flashSaleId], references: [id], onDelete: Cascade)
-
-  productId Int     @map("product_id")
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId   Int       @map("product_id")
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@id([flashSaleId, productId])
   @@map("flash_sale_products")
@@ -1529,9 +1523,8 @@ model FlashSaleProduct {
 model FlashSaleRequestsProduct {
   flashSaleRequestsId Int              @map("flash_sale_requests_id")
   flashSaleRequest    FlashSaleRequest @relation(fields: [flashSaleRequestsId], references: [id], onDelete: Cascade)
-
-  productId Int     @map("product_id")
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId           Int              @map("product_id")
+  product              Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@id([flashSaleRequestsId, productId])
   @@map("flash_sale_requests_products")
@@ -1568,24 +1561,24 @@ model Setting {
 
 // Spatie Media Library — polymorphic (model_type / model_id), join manual
 model Media {
-  id                   BigInt    @id @default(autoincrement())
-  modelType            String    @map("model_type") @db.VarChar(255)
-  modelId              BigInt    @map("model_id")
-  uuid                 String?   @db.VarChar(255)
-  collectionName       String    @map("collection_name") @db.VarChar(255)
-  name                 String    @db.VarChar(255)
-  fileName             String    @map("file_name") @db.VarChar(255)
-  mimeType             String?   @map("mime_type") @db.VarChar(255)
-  disk                 String    @db.VarChar(255)
-  conversionsDisk      String?   @map("conversions_disk") @db.VarChar(255)
-  size                 BigInt
-  manipulations        Json
-  generatedConversions Json      @map("generated_conversions")
-  customProperties     Json      @map("custom_properties")
-  responsiveImages     Json      @map("responsive_images")
-  orderColumn          Int?      @map("order_column")
-  createdAt            DateTime? @map("created_at")
-  updatedAt            DateTime? @map("updated_at")
+  id                    BigInt    @id @default(autoincrement())
+  modelType             String    @map("model_type") @db.VarChar(255)
+  modelId               BigInt    @map("model_id")
+  uuid                  String?   @db.VarChar(255)
+  collectionName        String    @map("collection_name") @db.VarChar(255)
+  name                  String    @db.VarChar(255)
+  fileName              String    @map("file_name") @db.VarChar(255)
+  mimeType              String?   @map("mime_type") @db.VarChar(255)
+  disk                  String    @db.VarChar(255)
+  conversionsDisk       String?   @map("conversions_disk") @db.VarChar(255)
+  size                  BigInt
+  manipulations         Json
+  generatedConversions  Json      @map("generated_conversions")
+  customProperties      Json      @map("custom_properties")
+  responsiveImages      Json      @map("responsive_images")
+  orderColumn           Int?      @map("order_column")
+  createdAt             DateTime? @map("created_at")
+  updatedAt             DateTime? @map("updated_at")
 
   @@index([modelType, modelId])
   @@map("media")

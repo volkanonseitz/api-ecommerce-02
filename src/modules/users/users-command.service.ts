@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RbacService } from '../../common/services/rbac.service';
@@ -7,16 +12,10 @@ import { EmailVerificationService } from '../auth/email-verification.service';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { Prisma } from '../../../generated/prisma/client';
 
 const USER_WITH_RELATIONS = { profile: true, address: true } as const;
 
-/**
- * Operasi TULIS seputar User — padanan gabungan UserCommandService +
- * CreateUserAction + UpdateUserAction + AdminUpdateUserAction +
- * ToggleUserActiveAction + ToggleAdminPrivilegeAction (Laravel).
- * Otorisasi (siapa boleh manggil method mana) dicek di controller lewat
- * CaslAbilityFactory, BUKAN di sini — service ini murni logika data.
- */
 @Injectable()
 export class UsersCommandService {
   constructor(
@@ -28,7 +27,9 @@ export class UsersCommandService {
 
   /** Padanan CreateUserAction (dipanggil UserManagementController::store). */
   async createByAdmin(dto: AdminCreateUserDto) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (existing) {
       throw new ConflictException('Email sudah terdaftar.');
     }
@@ -50,9 +51,11 @@ export class UsersCommandService {
         await tx.userProfile.create({
           data: {
             customerId: created.id,
-            avatar: dto.profile.avatar ? { original: dto.profile.avatar } : undefined,
+            avatar: dto.profile.avatar
+              ? { original: dto.profile.avatar }
+              : undefined,
             bio: dto.profile.bio,
-            socials: dto.profile.socials as object | undefined,
+            socials: dto.profile.socials as Prisma.InputJsonValue,
           },
         });
       }
@@ -79,7 +82,10 @@ export class UsersCommandService {
 
     await this.security.recordPasswordChange(user.id, dto.password);
 
-    return this.prisma.user.findUniqueOrThrow({ where: { id: user.id }, include: USER_WITH_RELATIONS });
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: user.id },
+      include: USER_WITH_RELATIONS,
+    });
   }
 
   /** Padanan UpdateUserAction (ProfileController::update — user update dirinya sendiri). */
@@ -132,7 +138,12 @@ export class UsersCommandService {
         if (dto.profile.id) {
           await tx.userProfile.updateMany({
             where: { id: dto.profile.id, customerId: userId },
-            data: { bio: dto.profile.bio, avatar: dto.profile.avatar ? { original: dto.profile.avatar } : undefined },
+            data: {
+              bio: dto.profile.bio,
+              avatar: dto.profile.avatar
+                ? { original: dto.profile.avatar }
+                : undefined,
+            },
           });
         } else {
           await tx.userProfile.upsert({
@@ -140,11 +151,15 @@ export class UsersCommandService {
             create: {
               customerId: userId,
               bio: dto.profile.bio,
-              avatar: dto.profile.avatar ? { original: dto.profile.avatar } : undefined,
+              avatar: dto.profile.avatar
+                ? { original: dto.profile.avatar }
+                : undefined,
             },
             update: {
               bio: dto.profile.bio,
-              avatar: dto.profile.avatar ? { original: dto.profile.avatar } : undefined,
+              avatar: dto.profile.avatar
+                ? { original: dto.profile.avatar }
+                : undefined,
             },
           });
         }
@@ -158,12 +173,17 @@ export class UsersCommandService {
       }
     });
 
-    return this.prisma.user.findUniqueOrThrow({ where: { id: userId }, include: USER_WITH_RELATIONS });
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      include: USER_WITH_RELATIONS,
+    });
   }
 
   /** Padanan AdminUpdateUserAction — bedanya shop_id BOLEH diubah di sini. */
   async updateByAdmin(targetId: number, dto: AdminUpdateUserDto) {
-    const target = await this.prisma.user.findUnique({ where: { id: targetId } });
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+    });
     if (!target) throw new NotFoundException('User tidak ditemukan.');
 
     if (dto.email) {
@@ -173,20 +193,32 @@ export class UsersCommandService {
       if (clash) throw new ConflictException('Email sudah digunakan.');
     }
 
-    const updateData: { name?: string; email?: string; shopId?: number | null } = {};
+    const updateData: {
+      name?: string;
+      email?: string;
+      shopId?: number | null;
+    } = {};
     if (dto.name) updateData.name = dto.name;
     if (dto.email) updateData.email = dto.email;
     if (dto.shop_id !== undefined) updateData.shopId = dto.shop_id;
 
     if (Object.keys(updateData).length > 0) {
-      await this.prisma.user.update({ where: { id: targetId }, data: updateData });
+      await this.prisma.user.update({
+        where: { id: targetId },
+        data: updateData,
+      });
     }
 
-    return this.prisma.user.findUniqueOrThrow({ where: { id: targetId }, include: USER_WITH_RELATIONS });
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: targetId },
+      include: USER_WITH_RELATIONS,
+    });
   }
 
   async updateEmail(userId: number, newEmail: string): Promise<void> {
-    const clash = await this.prisma.user.findFirst({ where: { email: newEmail, id: { not: userId } } });
+    const clash = await this.prisma.user.findFirst({
+      where: { email: newEmail, id: { not: userId } },
+    });
     if (clash) throw new ConflictException('Email sudah digunakan.');
 
     const updated = await this.prisma.user.update({
@@ -196,7 +228,9 @@ export class UsersCommandService {
 
     // Padanan `$user->sendEmailVerificationNotification()` yang otomatis
     // terpanggil di Laravel saat email berubah (event Registered/Updated).
-    await this.emailVerificationService.sendVerificationEmail(updated).catch(() => undefined);
+    await this.emailVerificationService
+      .sendVerificationEmail(updated)
+      .catch(() => undefined);
   }
 
   /**
@@ -211,22 +245,31 @@ export class UsersCommandService {
     oldPassword: string,
     newPassword: string,
   ): Promise<void> {
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
 
     if (!user.password || !(await bcrypt.compare(oldPassword, user.password))) {
       throw new BadRequestException('Password lama tidak sesuai.');
     }
 
     if (oldPassword === newPassword) {
-      throw new BadRequestException('Password baru tidak boleh sama dengan password lama.');
+      throw new BadRequestException(
+        'Password baru tidak boleh sama dengan password lama.',
+      );
     }
 
     if (await this.security.isPasswordInHistory(userId, newPassword)) {
-      throw new BadRequestException('Password baru tidak boleh sama dengan password sebelumnya.');
+      throw new BadRequestException(
+        'Password baru tidak boleh sama dengan password sebelumnya.',
+      );
     }
 
     const newHash = await bcrypt.hash(newPassword, 12);
-    await this.prisma.user.update({ where: { id: userId }, data: { password: newHash } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: newHash },
+    });
     await this.security.recordPasswordChange(userId, newPassword);
 
     // Cabut semua sesi LAIN (bukan sesi yang sedang dipakai) setelah ganti password.
@@ -237,33 +280,55 @@ export class UsersCommandService {
 
   /** Padanan ToggleUserActiveAction. */
   async toggleActive(targetId: number, active: boolean) {
-    const target = await this.prisma.user.findUnique({ where: { id: targetId } });
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+    });
     if (!target) throw new NotFoundException('User tidak ditemukan.');
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({ where: { id: targetId }, data: { isActive: active } });
+      await tx.user.update({
+        where: { id: targetId },
+        data: { isActive: active },
+      });
 
       if (!active) {
-        const shops = await tx.shop.findMany({ where: { ownerId: targetId }, select: { id: true } });
+        const shops = await tx.shop.findMany({
+          where: { ownerId: targetId },
+          select: { id: true },
+        });
         const shopIds = shops.map((s) => s.id);
         if (shopIds.length > 0) {
-          await tx.shop.updateMany({ where: { id: { in: shopIds } }, data: { isActive: false } });
-          await tx.product.updateMany({ where: { shopId: { in: shopIds } }, data: { status: 'draft' } });
+          await tx.shop.updateMany({
+            where: { id: { in: shopIds } },
+            data: { isActive: false },
+          });
+          await tx.product.updateMany({
+            where: { shopId: { in: shopIds } },
+            data: { status: 'draft' },
+          });
         }
         // Nonaktifkan juga akun -> cabut semua sesi aktif (dipaksa logout).
         await tx.userSession.deleteMany({ where: { userId: targetId } });
       }
     });
 
-    return this.prisma.user.findUniqueOrThrow({ where: { id: targetId }, include: USER_WITH_RELATIONS });
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: targetId },
+      include: USER_WITH_RELATIONS,
+    });
   }
 
   /** Padanan ToggleAdminPrivilegeAction. */
   async toggleAdmin(targetId: number): Promise<boolean> {
-    const target = await this.prisma.user.findUnique({ where: { id: targetId } });
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+    });
     if (!target) throw new NotFoundException('User tidak ditemukan.');
 
-    const isCurrentlyAdmin = await this.rbac.hasPermission(targetId, 'super_admin');
+    const isCurrentlyAdmin = await this.rbac.hasPermission(
+      targetId,
+      'super_admin',
+    );
 
     if (isCurrentlyAdmin) {
       await this.rbac.revokePermission(targetId, 'super_admin');
@@ -277,7 +342,9 @@ export class UsersCommandService {
   }
 
   async deleteUser(targetId: number): Promise<void> {
-    const target = await this.prisma.user.findUnique({ where: { id: targetId } });
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+    });
     if (!target) throw new NotFoundException('User tidak ditemukan.');
     await this.prisma.user.delete({ where: { id: targetId } });
   }

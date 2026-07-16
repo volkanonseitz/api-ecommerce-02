@@ -31,17 +31,6 @@ interface GoogleProfileResponse {
   picture?: string;
 }
 
-/**
- * Padanan Laravel\Socialite (dipakai di SocialLoginService.php lama).
- * Socialite tidak punya padanan langsung di Node, jadi verifikasi access
- * token dilakukan manual dengan memanggil endpoint resmi tiap provider —
- * fungsinya sama: tukar access_token dari client -> profil user asli.
- *
- * `HttpService.get<T>()` diberi generic eksplisit supaya `data` bertipe T
- * (bukan `any`) — inilah yang membuat ESLint `@typescript-eslint/no-unsafe-*`
- * tenang: tanpa generic ini, AxiosResponse<any> membuat setiap akses
- * `.email`, `.id`, dst dianggap "unsafe member access" oleh linter.
- */
 @Injectable()
 export class SocialLoginService {
   private static readonly ALLOWED_PROVIDERS = ['facebook', 'google'] as const;

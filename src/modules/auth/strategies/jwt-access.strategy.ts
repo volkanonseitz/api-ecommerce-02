@@ -10,13 +10,6 @@ export interface AccessTokenPayload {
   sid: string; // session id (UUID), disimpan juga di UserSession.tokenId
 }
 
-/**
- * Padanan middleware `auth:sanctum` (Laravel) untuk access token.
- * Beda dari Sanctum: token TIDAK disimpan di DB (stateless JWT), yang
- * disimpan hanya baris UserSession (untuk listing/pencabutan sesi) —
- * kalau baris sesinya dihapus (revoke/logout-all), token lama otomatis
- * ditolak walau secara kriptografis JWT masih valid sampai expired.
- */
 @Injectable()
 export class JwtAccessStrategy extends PassportStrategy(
   Strategy,
