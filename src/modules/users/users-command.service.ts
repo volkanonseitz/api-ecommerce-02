@@ -331,10 +331,8 @@ export class UsersCommandService {
     );
 
     if (isCurrentlyAdmin) {
-      await this.rbac.revokePermission(targetId, 'super_admin');
       await this.rbac.removeRole(targetId, 'super_admin');
     } else {
-      await this.rbac.grantPermission(targetId, 'super_admin');
       await this.rbac.assignRole(targetId, 'super_admin');
     }
 

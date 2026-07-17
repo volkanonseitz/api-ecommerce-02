@@ -35,49 +35,6 @@ export class RbacService {
       .catch(() => undefined);
   }
 
-  async grantPermission(userId: number, permissionName: string): Promise<void> {
-    const permission = await this.prisma.permission.findFirst({
-      where: { name: permissionName, guardName: GUARD_NAME },
-    });
-    if (!permission) {
-      this.logger.warn(
-        `Permission "${permissionName}" belum di-seed, dilewati.`,
-      );
-      return;
-    }
-    await this.prisma.userPermission.upsert({
-      where: { permissionId_userId: { permissionId: permission.id, userId } },
-      create: { permissionId: permission.id, userId },
-      update: {},
-    });
-  }
-
-  async revokePermission(
-    userId: number,
-    permissionName: string,
-  ): Promise<void> {
-    const permission = await this.prisma.permission.findFirst({
-      where: { name: permissionName, guardName: GUARD_NAME },
-    });
-    if (!permission) return;
-    await this.prisma.userPermission
-      .delete({
-        where: { permissionId_userId: { permissionId: permission.id, userId } },
-      })
-      .catch(() => undefined);
-  }
-
-  async hasRole(userId: number, roleName: string): Promise<boolean> {
-    const role = await this.prisma.role.findFirst({
-      where: { name: roleName, guardName: GUARD_NAME },
-    });
-    if (!role) return false;
-    const link = await this.prisma.userRole.findUnique({
-      where: { roleId_userId: { roleId: role.id, userId } },
-    });
-    return !!link;
-  }
-
   async hasAnyRole(userId: number, roleNames: string[]): Promise<boolean> {
     const count = await this.prisma.userRole.count({
       where: {
@@ -92,26 +49,22 @@ export class RbacService {
     userId: number,
     permissionName: string,
   ): Promise<boolean> {
-    const direct = await this.prisma.userPermission.count({
-      where: {
-        userId,
-        permission: { name: permissionName, guardName: GUARD_NAME },
-      },
-    });
-    if (direct > 0) return true;
-
     const viaRole = await this.prisma.userRole.count({
       where: {
         userId,
         role: {
           permissions: {
             some: {
-              permission: { name: permissionName, guardName: GUARD_NAME },
+              permission: {
+                name: permissionName,
+                guardName: GUARD_NAME,
+              },
             },
           },
         },
       },
     });
+
     return viaRole > 0;
   }
 
@@ -119,19 +72,31 @@ export class RbacService {
   async getUserRoleAndPermissionNames(
     userId: number,
   ): Promise<{ roles: string[]; permissions: string[] }> {
-    const [roleLinks, permissionLinks] = await Promise.all([
-      this.prisma.userRole.findMany({
-        where: { userId },
-        include: { role: true },
-      }),
-      this.prisma.userPermission.findMany({
-        where: { userId },
-        include: { permission: true },
-      }),
-    ]);
-    return {
-      roles: roleLinks.map((r) => r.role.name),
-      permissions: permissionLinks.map((p) => p.permission.name),
-    };
+    const roleLinks = await this.prisma.userRole.findMany({
+      where: { userId },
+      include: {
+        role: {
+          include: {
+            permissions: {
+              include: {
+                permission: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const roles = roleLinks.map((r) => r.role.name);
+
+    const permissions = [
+      ...new Set(
+        roleLinks.flatMap((r) =>
+          r.role.permissions.map((p) => p.permission.name),
+        ),
+      ),
+    ];
+
+    return { roles, permissions };
   }
 }

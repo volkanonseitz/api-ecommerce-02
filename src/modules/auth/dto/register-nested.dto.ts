@@ -1,4 +1,5 @@
 import { IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class RegisterProfileDto {
   @IsOptional()
@@ -12,6 +13,13 @@ export class RegisterProfileDto {
   bio?: string;
 
   @IsOptional()
+  @Transform(({ value }): unknown[] | undefined => {
+    if (!value) return undefined;
+
+    return typeof value === 'string'
+      ? (JSON.parse(value) as unknown[])
+      : (value as unknown[]);
+  })
   @IsArray()
   socials?: unknown[];
 }

@@ -4,8 +4,6 @@ generator client {
   moduleFormat = "cjs"
 }
 
-// Prisma ORM 7: connection URL TIDAK lagi ditaruh di sini, tapi di
-// prisma.config.ts (lihat file tersebut di root project).
 datasource db {
   provider = "mysql"
 }
@@ -201,7 +199,6 @@ model User {
   ownershipTransfersCreated OwnershipTransfer[] @relation("OwnershipTransferCreatedBy")
 
   roles       UserRole[]
-  permissions UserPermission[]
 
   @@map("users")
 }
@@ -263,7 +260,7 @@ model Role {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  permissions RoleHasPermission[]
+  permissions RolePermission[]
   users       UserRole[]
 
   @@unique([name, guardName])
@@ -277,43 +274,32 @@ model Permission {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  roles RoleHasPermission[]
-  users UserPermission[]
+  roles RolePermission[]
 
   @@unique([name, guardName])
   @@map("permissions")
 }
 
-model RoleHasPermission {
+model RolePermission {
   roleId       Int        @map("role_id")
   role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permissionId Int        @map("permission_id")
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([permissionId, roleId])
-  @@map("role_has_permissions")
+  @@map("role_permissions")
 }
 
 // model_has_roles (disederhanakan, morph target selalu User)
 model UserRole {
-  userId Int  @map("model_id")
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roleId Int  @map("role_id")
-  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  userId Int @map("user_id")
+  user   User @relation(fields: [userId], references: [id])
+
+  roleId Int @map("role_id")
+  role   Role @relation(fields: [roleId], references: [id])
 
   @@id([roleId, userId])
-  @@map("model_has_roles")
-}
-
-// model_has_permissions (disederhanakan, morph target selalu User)
-model UserPermission {
-  userId       Int        @map("model_id")
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  permissionId Int        @map("permission_id")
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@id([permissionId, userId])
-  @@map("model_has_permissions")
+  @@map("user_roles")
 }
 
 // ============================================================================

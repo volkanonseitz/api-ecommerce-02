@@ -112,7 +112,7 @@ export class AuthService {
       throw new ConflictException('Email sudah terdaftar.');
     }
 
-    const grantedPermission =
+    const grantedRole =
       dto.permission === 'store_owner' ? 'store_owner' : 'customer';
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
@@ -134,7 +134,7 @@ export class AuthService {
               ? { original: dto.profile.avatar }
               : undefined,
             bio: dto.profile.bio,
-            socials: dto.profile.socials as Prisma.InputJsonValue,
+            socials: dto.profile.socials as Prisma.InputJsonValue | undefined,
           },
         });
       }
@@ -159,11 +159,8 @@ export class AuthService {
       return created;
     });
 
-    await this.rbac.grantPermission(user.id, grantedPermission);
-    await this.rbac.assignRole(user.id, grantedPermission);
+    await this.rbac.assignRole(user.id, grantedRole);
 
-    // Fire-and-forget: kegagalan kirim email TIDAK boleh menggagalkan
-    // registrasi (user masih bisa minta kirim ulang lewat POST /auth/email/resend).
     this.emailVerificationService
       .sendVerificationEmail(user)
       .catch(() => undefined);
@@ -171,7 +168,6 @@ export class AuthService {
     return user;
   }
 
-  /** Padanan SocialLoginService.php (handle()). */
   async socialLogin(
     provider: 'facebook' | 'google',
     accessToken: string,
@@ -265,14 +261,12 @@ export class AuthService {
       'staff',
     ]);
     if (!isStaffOrAbove) {
-      await this.rbac.grantPermission(user.id, 'customer');
       await this.rbac.assignRole(user.id, 'customer');
     }
 
     return user;
   }
 
-  /** Padanan issueToken() lama, tapi menerbitkan SEPASANG token (access+refresh). */
   async issueTokenPair(userId: number, meta: RequestMeta): Promise<TokenPair> {
     const sessionId = randomUUID();
 
@@ -306,11 +300,6 @@ export class AuthService {
     return { accessToken, refreshToken, sessionId };
   }
 
-  /**
-   * Padanan token rotation: refresh token lama otomatis invalid setelah
-   * dipakai sekali (session row di-update ke sid baru), mendeteksi
-   * replay/pencurian refresh token.
-   */
   async rotateTokenPair(
     userId: number,
     sessionDbId: number,
@@ -348,7 +337,6 @@ export class AuthService {
     return { accessToken, refreshToken, sessionId };
   }
 
-  /** Padanan AuthService::logout() (satu sesi/device saat ini). */
   async logout(userId: number, sessionId: string): Promise<void> {
     await this.prisma.userSession.deleteMany({
       where: { userId, tokenId: sessionId },

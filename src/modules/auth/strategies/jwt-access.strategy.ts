@@ -31,8 +31,11 @@ export class JwtAccessStrategy extends PassportStrategy(
       this.prisma.user.findUnique({
         where: { id: payload.sub },
         include: {
-          roles: { include: { role: true } },
-          permissions: { include: { permission: true } },
+          roles: {
+            include: {
+              role: true,
+            },
+          },
         },
       }),
       this.prisma.userSession.findFirst({
@@ -61,15 +64,20 @@ export class JwtAccessStrategy extends PassportStrategy(
       .catch(() => undefined);
 
     const roleNames = user.roles.map((r) => r.role.name);
-    const rolePermissionNames = await this.prisma.roleHasPermission.findMany({
-      where: { roleId: { in: user.roles.map((r) => r.roleId) } },
-      include: { permission: true },
+    const rolePermissionNames = await this.prisma.rolePermission.findMany({
+      where: {
+        roleId: {
+          in: user.roles.map((r) => r.roleId),
+        },
+      },
+      include: {
+        permission: true,
+      },
     });
 
-    const permissionNames = new Set<string>([
-      ...user.permissions.map((p) => p.permission.name),
-      ...rolePermissionNames.map((rp) => rp.permission.name),
-    ]);
+    const permissionNames = new Set<string>(
+      rolePermissionNames.map((rp) => rp.permission.name),
+    );
 
     return {
       id: user.id,
