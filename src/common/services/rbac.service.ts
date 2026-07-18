@@ -1,9 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 
-/** Padanan `protected string $guard_name = 'api';` di App\Models\User.php lama. */
-const GUARD_NAME = 'api';
-
 @Injectable()
 export class RbacService {
   private readonly logger = new Logger(RbacService.name);
@@ -12,10 +9,10 @@ export class RbacService {
 
   async assignRole(userId: number, roleName: string): Promise<void> {
     const role = await this.prisma.role.findFirst({
-      where: { name: roleName, guardName: GUARD_NAME },
+      where: { name: roleName }, // <-- GUARD_NAME dihapus!
     });
     if (!role) {
-      this.logger.warn(`Role "${roleName}" belum di-seed, dilewati.`);
+      this.logger.warn(`Role "${roleName}" tidak ditemukan.`);
       return;
     }
     await this.prisma.userRole.upsert({
@@ -27,7 +24,7 @@ export class RbacService {
 
   async removeRole(userId: number, roleName: string): Promise<void> {
     const role = await this.prisma.role.findFirst({
-      where: { name: roleName, guardName: GUARD_NAME },
+      where: { name: roleName },
     });
     if (!role) return;
     await this.prisma.userRole
@@ -39,7 +36,7 @@ export class RbacService {
     const count = await this.prisma.userRole.count({
       where: {
         userId,
-        role: { name: { in: roleNames }, guardName: GUARD_NAME },
+        role: { name: { in: roleNames } },
       },
     });
     return count > 0;
@@ -57,7 +54,6 @@ export class RbacService {
             some: {
               permission: {
                 name: permissionName,
-                guardName: GUARD_NAME,
               },
             },
           },

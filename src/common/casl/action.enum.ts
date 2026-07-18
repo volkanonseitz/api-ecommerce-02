@@ -12,4 +12,11 @@ export enum Action {
   RevokeSessions = 'revokeSessions',
   ViewAuditLogs = 'viewAuditLogs',
   UpdateSecuritySettings = 'updateSecuritySettings',
+
+  // Shop
+  ManageStaff = 'manageStaff',
+  TransferOwnership = 'transferOwnership',
+  ToggleMaintenance = 'toggleMaintenance',
+  ApproveShop = 'approve',
+  ViewBalance = 'viewBalance',
 }

@@ -14,3 +14,15 @@ export interface AuthUser {
 export interface UserSubject {
   id: number;
 }
+
+export interface ShopSubject {
+  id: number;
+  ownerId: number;
+  isStaff?: boolean;
+}
+
+export interface OwnershipTransferSubject {
+  id: number;
+  fromId: number;
+  toId: number;
+}
